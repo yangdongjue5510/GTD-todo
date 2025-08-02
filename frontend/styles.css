@@ -1,0 +1,67 @@
+:root {
+  --bg: #f8f9fa;
+  --card: #ffffff;
+  --primary: #4f46e5;
+  --text: #111827;
+  --border: #e5e7eb;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  margin: 0;
+  padding: 2rem;
+}
+
+h1 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.inbox-container {
+  max-width: 640px;
+  margin: 0 auto;
+  background-color: var(--card);
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border);
+}
+
+.input-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.input-row input {
+  flex: 1;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font-size: 1rem;
+}
+
+.input-row button {
+  padding: 0.75rem 1.25rem;
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.input-row button:hover {
+  background-color: #4338ca;
+}
+
+.thing-list {
+  margin-top: 1.5rem;
+}
+
+.thing-item {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
