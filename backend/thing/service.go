@@ -1,13 +1,17 @@
 package thing
 
+import "yangdongju/gtd-todo/action"
+
 type ThingService interface {
 	AddThing(thing Thing)
 	GetThings() []Thing
+	Clarify(thing Thing)
 }
 
 type InmemoryThingService struct {
 	things   []Thing
 	sequence int
+	actionService action.ActionService
 }
 
 func (s *InmemoryThingService) AddThing(thing Thing) {
@@ -20,4 +24,8 @@ func (s *InmemoryThingService) GetThings() []Thing {
 	copiedThings := make([]Thing, len(s.things))
 	copy(copiedThings, s.things)
 	return copiedThings
+}
+
+func (s *InmemoryThingService) Clarify(thing Thing) {
+	
 }
