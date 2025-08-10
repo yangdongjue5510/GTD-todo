@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Test</title>
+</head>
+<body>
+    <h1>JavaScript Module Test</h1>
+    <div id="test-result"></div>
+    
+    <script>
+        // 기본 JavaScript 동작 테스트
+        document.getElementById('test-result').innerHTML = 'Basic JS works!';
+        
+        // ES6 모듈 테스트
+        console.log('Testing ES6 modules...');
+        
+        // API 테스트
+        fetch('http://localhost:8080/things/')
+            .then(response => response.json())
+            .then(data => {
+                console.log('API works:', data);
+                document.getElementById('test-result').innerHTML += '<br>API works! Got ' + data.length + ' things';
+            })
+            .catch(error => {
+                console.error('API error:', error);
+                document.getElementById('test-result').innerHTML += '<br>API error: ' + error.message;
+            });
+    </script>
+</body>
+</html>
