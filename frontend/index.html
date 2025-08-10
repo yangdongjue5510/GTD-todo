@@ -1,23 +1,161 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="GTD 방법론 기반 할일 관리 서비스">
   <title>GTD-TODO</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div class="inbox-container">
-    <h1>🧠 Inbox - Capture your thoughts</h1>
-    <div class="input-row">
-      <input type="text" placeholder="What's on your mind?">
-      <input type="text" id="description" placeholder="Add a description (optional)">
-      <button>Add</button>
-    </div>
-    <div class="thing-list">
-      <!-- Items will be dynamically added here -->
-    </div>
+  <!-- 메인 앱 컨테이너 -->
+  <div class="app" id="app">
+    <!-- 헤더 및 네비게이션 -->
+    <header class="app-header">
+      <div class="container">
+        <h1 class="app-title">GTD-TODO</h1>
+        <nav class="main-nav" role="navigation" aria-label="메인 네비게이션">
+          <button class="nav-item active" data-view="inbox" type="button">
+            <span class="nav-icon">📥</span>
+            <span class="nav-text">Inbox</span>
+          </button>
+          <button class="nav-item" data-view="actions" type="button">
+            <span class="nav-icon">✅</span>
+            <span class="nav-text">Actions</span>
+          </button>
+          <button class="nav-item" data-view="projects" type="button">
+            <span class="nav-icon">📁</span>
+            <span class="nav-text">Projects</span>
+          </button>
+          <button class="nav-item" data-view="review" type="button">
+            <span class="nav-icon">📊</span>
+            <span class="nav-text">Review</span>
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- 메인 콘텐츠 영역 -->
+    <main class="app-main">
+      <div class="container">
+        <!-- Inbox 화면 -->
+        <section class="view" id="inbox-view" data-view="inbox">
+          <div class="view-header">
+            <h2 class="view-title">🧠 Inbox</h2>
+            <p class="view-subtitle">생각을 자유롭게 포착하세요</p>
+          </div>
+          
+          <div class="capture-form">
+            <form id="capture-form" role="form" aria-label="새로운 생각 추가">
+              <div class="input-group">
+                <label for="thing-title" class="sr-only">생각 제목</label>
+                <input 
+                  type="text" 
+                  id="thing-title" 
+                  name="title"
+                  class="input-field input-primary" 
+                  placeholder="무엇을 생각하고 계신가요?"
+                  required
+                  autocomplete="off"
+                >
+                <label for="thing-description" class="sr-only">상세 설명</label>
+                <input 
+                  type="text" 
+                  id="thing-description" 
+                  name="description"
+                  class="input-field input-secondary" 
+                  placeholder="설명 추가 (선택사항)"
+                  autocomplete="off"
+                >
+                <button type="submit" class="btn btn-primary">
+                  <span class="btn-text">추가</span>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <div class="thing-list" id="thing-list" role="list" aria-label="포착된 생각 목록">
+            <!-- 동적으로 생성될 Thing 아이템들 -->
+          </div>
+        </section>
+
+        <!-- Clarify 화면 -->
+        <section class="view hidden" id="clarify-view" data-view="clarify">
+          <div class="view-header">
+            <button class="btn-back" id="clarify-back" type="button" aria-label="뒤로 가기">
+              ← 뒤로
+            </button>
+            <h2 class="view-title">🤔 명확화</h2>
+            <p class="view-subtitle">이것을 어떻게 처리할까요?</p>
+          </div>
+
+          <div class="clarify-content" id="clarify-content">
+            <!-- 동적으로 생성될 명확화 UI -->
+          </div>
+        </section>
+
+        <!-- Actions 화면 -->
+        <section class="view hidden" id="actions-view" data-view="actions">
+          <div class="view-header">
+            <h2 class="view-title">✅ Actions</h2>
+            <p class="view-subtitle">오늘 할 일</p>
+          </div>
+
+          <div class="filter-bar">
+            <button class="filter-btn active" data-filter="all" type="button">전체</button>
+            <button class="filter-btn" data-filter="todo" type="button">해야됨</button>
+            <button class="filter-btn" data-filter="doing" type="button">수행중</button>
+            <button class="filter-btn" data-filter="done" type="button">완료</button>
+          </div>
+
+          <div class="action-list" id="action-list" role="list" aria-label="액션 목록">
+            <!-- 동적으로 생성될 Action 아이템들 -->
+          </div>
+        </section>
+
+        <!-- Projects 화면 -->
+        <section class="view hidden" id="projects-view" data-view="projects">
+          <div class="view-header">
+            <h2 class="view-title">📁 Projects</h2>
+            <p class="view-subtitle">진행중인 프로젝트</p>
+          </div>
+
+          <div class="project-list" id="project-list" role="list" aria-label="프로젝트 목록">
+            <div class="empty-state">
+              <p>아직 프로젝트가 없습니다.</p>
+              <p class="text-muted">복잡한 작업을 Inbox에서 명확화할 때 프로젝트로 만들 수 있습니다.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Review 화면 -->
+        <section class="view hidden" id="review-view" data-view="review">
+          <div class="view-header">
+            <h2 class="view-title">📊 Review</h2>
+            <p class="view-subtitle">진행 상황 검토</p>
+          </div>
+
+          <div class="review-content" id="review-content">
+            <div class="empty-state">
+              <p>리뷰 기능은 곧 추가될 예정입니다.</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
   </div>
-  <script src="app.js"></script>
+
+  <!-- 로딩 인디케이터 -->
+  <div class="loading" id="loading" aria-hidden="true">
+    <div class="loading-spinner"></div>
+  </div>
+
+  <!-- 토스트 메시지 -->
+  <div class="toast" id="toast" role="alert" aria-live="polite"></div>
+
+  <script type="module" src="js/app.js"></script>
 </body>
 </html>
