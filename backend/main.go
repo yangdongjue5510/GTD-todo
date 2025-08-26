@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"yangdongju/gtd-todo/thing"
+	"yangdongju/gtd-todo/action"
 	"github.com/gin-contrib/cors"
 	"time"
 )
@@ -22,8 +23,9 @@ func main() {
 }
 
 func thingRoutes(r *gin.Engine) {
-	service := &thing.InmemoryThingService{}
-	handler := thing.NewThingHandler(service)
+	actionService := action.NewInmemoryActionService()
+	thingService := thing.NewInmemoryThingService(actionService)
+	handler := thing.NewThingHandler(thingService)
 	
 	thing.SetupRoutes(r, handler)
 }

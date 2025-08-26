@@ -21,10 +21,15 @@ func SetupRoutes(r *gin.Engine, handler *ThingHandler) {
 func (h *ThingHandler) AddThing(c *gin.Context) {
 	var thing Thing
 	if err := c.ShouldBindJSON(&thing); err != nil {
-		c.JSON(400, gin.H{"error": "Invalid input"})
+		c.JSON(400, gin.H{"error": "Invalid JSON format"})
 		return
 	}
-	h.service.AddThing(thing)
+	
+	if err := h.service.AddThing(thing); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	
 	c.JSON(201, thing)
 }
 
