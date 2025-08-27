@@ -13,6 +13,42 @@ HTTP Request → Handler → Service → Model
 - **Services** (`*_service.go`): 비즈니스 로직, 데이터 검증, 워크플로우 구현
 - **Models** (`*_model.go`): 데이터 구조, 열거형, 도메인 엔티티
 
+### Domain Driven Design
+backend 디렉토리 하위는 도메인 별로 디렉토리가 나뉘고 각 디렉토리의 `CLAUDE.md` 파일에 규정된 도메인 로직을 기반으로 해당 디렉토리에 구현.
+각 도메인에 해당하는 API, 상태 관련 스키마 등은 해당 도메인 디렉토리의 CLAUDE.md에 정해놓음.
+
+#### 서브 도메인 구조
+Domain Driven Design에 의해 서브 도메인은 아래와 설계 되었음.
+
+**Workflow Context (Core Domain)**
+
+- Action과 Project의 생명 주기를 관리
+- GTD의 organize, engage에 따라 Action과 Project의 생성 및 상태 변경을 처리.
+
+**Capture Context (Support Domain)**
+
+- 외부의 다양한 데이터 혹은 입력을 기반으로 inbox에 Thing으로 변환하여 모으는 기능 관리
+- Thing을 Action으로 변환하는 clarify도 지원
+
+**Reflect Context (Support Domain)**
+
+- 일정한 주기(일간, 주간)으로 Thing, Action, Project 진행 현황을 정리해서 사용자에게 보고하는 기능
+
+**Notification Context (Generic Domain)**
+
+- 사용자에게 알림을 보내는 기능을 다루는 영역
+
+**Authorization Context (Generic Domain)**
+
+- 사용자 인증/인가 관련된 기능을 다루는 영역.
+
+> 주요 도메인의 의존성 방향은 아래와 같음.
+
+Capture → Workflow  
+Reflect → Capture + Workflow
+
+이때 서로 다른 도메인의 모델을 직접 참조해서 사용하지는 않도록 하고 서비스만 호출하도록 한다.
+
 ### 현재 패키지
 - `thing/`: Pending/Someday/Done 상태를 가진 Thing (생각) 관리
 - `action/`: 더 세분화된 상태 추적을 가진 Action (작업) 관리
@@ -37,55 +73,11 @@ go test -v ./...
 go mod tidy
 ```
 
-## 코딩 컨벤션
-
-### 오류 처리
-```go
-if err := c.ShouldBindJSON(&thing); err != nil {
-    c.JSON(400, gin.H{"error": "Invalid input"})
-    return
-}
-```
-
-### 서비스 인터페이스 패턴
-```go
-type ThingService interface {
-    AddThing(thing Thing)
-    GetThings() []Thing
-    Clarify(thing Thing)
-}
-```
-
-### 상태 열거형
-String() 메서드와 함께 `iota`를 사용한 상태 열거형:
-```go
-type Status int
-
-const (
-    Pending Status = iota
-    Someday
-    Done
-)
-
-func (s Status) String() string { ... }
-```
-
-### JSON 구조체 태그
-API 모델에는 항상 JSON 태그를 포함:
-```go
-type Thing struct {
-    ID          int    `json:"id"`
-    Title       string `json:"title"`
-    Description string `json:"description"`
-    Status      Status `json:"status"`
-}
-```
 
 ## API 설계
-
+모든 도메인 디렉토리의 HTTP 핸들러는 아래와 같은 방식에 따라 API를 설계해야 함.
 ### REST 컨벤션
-- `POST /things/` - 새 Thing 생성
-- `GET /things/` - 모든 Thing 목록 조회
+- RESTful API에 맞는 HTTP Method 사용.
 - 적절한 HTTP 상태 코드 사용 (200, 201, 400, 404, 500)
 - 일관된 구조의 JSON 응답 반환
 
@@ -101,27 +93,6 @@ AllowOrigins: []string{"*"} // 운영환경에서는 변경
 - 같은 패키지에 `*_test.go` 파일
 - 테스트 함수 이름: `TestFunctionName`
 - 여러 시나리오에는 테이블 기반 테스트 사용
-
-### 테스트 구조 예시
-```go
-func TestAddThing(t *testing.T) {
-    service := &InmemoryThingService{}
-    thing := Thing{Title: "Test", Description: "Test desc"}
-    
-    service.AddThing(thing)
-    
-    things := service.GetThings()
-    assert.Equal(t, 1, len(things))
-}
-```
-
-## 현재 제한사항 및 TODO
-
-1. **인메모리 저장소**: 재시작 시 데이터 손실
-2. **Action 엔드포인트 누락**: Thing API만 구현됨
-3. **인증 없음**: 개방형 API
-4. **Clarify 메서드**: ThingService에서 구현되지 않음
-5. **Project 엔티티**: 정의되었지만 완전히 구현되지 않음
 
 ## GTD 구현 노트
 
