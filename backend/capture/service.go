@@ -16,7 +16,7 @@ type ClarifiedData struct {
 }
 
 type ThingService interface {
-	AddThing(thing Thing) error
+	AddThing(thing Thing) (*Thing, error)
 	GetThings() []Thing
 	ClarifyThing(thingID int) (*ClarifiedData, error)
 	MarkThingAsProcessed(thingID int) error
@@ -34,15 +34,15 @@ func NewInmemoryThingService() ThingService {
 	}
 }
 
-func (s *InmemoryThingService) AddThing(thing Thing) error {
+func (s *InmemoryThingService) AddThing(thing Thing) (*Thing, error) {
 	if thing.Title == "" {
-		return errors.New("thing title cannot be empty")
+		return nil, errors.New("thing title cannot be empty")
 	}
 	
 	s.sequence++
 	thing.ID = s.sequence
 	s.things = append(s.things, thing)
-	return nil
+	return &s.things[len(s.things)-1], nil
 }
 
 func (s *InmemoryThingService) GetThings() []Thing {

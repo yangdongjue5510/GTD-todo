@@ -35,12 +35,13 @@ func (h *ThingHandler) AddThing(c *gin.Context) {
 		return
 	}
 	
-	if err := h.thingService.AddThing(thing); err != nil {
+	createdThing, err := h.thingService.AddThing(thing)
+	if err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
 	
-	c.JSON(201, thing)
+	c.JSON(201, createdThing)
 }
 
 func (h *ThingHandler) GetThings(c *gin.Context) {
