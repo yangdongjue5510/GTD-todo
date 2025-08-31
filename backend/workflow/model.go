@@ -1,10 +1,14 @@
-package action
+package workflow
+
+import "time"
 
 type Action struct {
-	ID          int    `json:"id"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	Status      Status `json:"status"`
+	ID          int        `json:"id"`
+	Title       string     `json:"title"`
+	Description string     `json:"description"`
+	Status      Status     `json:"status"`
+	DueDate     *time.Time `json:"due_date,omitempty"`
+	Context     string     `json:"context,omitempty"`
 }
 
 type Status int

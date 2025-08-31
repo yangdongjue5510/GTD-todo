@@ -1,4 +1,4 @@
-package thing
+package capture
 
 
 type Thing struct {
