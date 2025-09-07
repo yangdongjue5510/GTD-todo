@@ -1,18 +1,18 @@
-package capture
+package web
 
 import (
 	"strconv"
 	"yangdongju/gtd-todo/workflow"
-	
+	"yangdongju/gtd-todo/capture"
 	"github.com/gin-gonic/gin"
 )
 
 type ThingHandler struct {
-	thingService  ThingService
+	thingService  capture.ThingService
 	actionService workflow.ActionService
 }
 
-func NewThingHandler(thingService ThingService, actionService workflow.ActionService) *ThingHandler {
+func NewThingHandler(thingService capture.ThingService, actionService workflow.ActionService) *ThingHandler {
 	return &ThingHandler{
 		thingService:  thingService,
 		actionService: actionService,
@@ -29,7 +29,7 @@ func SetupRoutes(r *gin.Engine, handler *ThingHandler) {
 }
 
 func (h *ThingHandler) AddThing(c *gin.Context) {
-	var thing Thing
+	var thing capture.Thing
 	if err := c.ShouldBindJSON(&thing); err != nil {
 		c.JSON(400, gin.H{"error": "Invalid JSON format"})
 		return

@@ -1,4 +1,4 @@
-package capture
+package web
 
 import (
 	"bytes"
@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 	"yangdongju/gtd-todo/workflow"
+	"yangdongju/gtd-todo/capture"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/mock"
@@ -18,25 +19,25 @@ type MockThingService struct {
 	mock.Mock
 }
 
-func (m *MockThingService) AddThing(thing Thing) (*Thing, error) {
+func (m *MockThingService) AddThing(thing capture.Thing) (*capture.Thing, error) {
 	args := m.Called(thing)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*Thing), args.Error(1)
+	return args.Get(0).(*capture.Thing), args.Error(1)
 }
 
-func (m *MockThingService) GetThings() []Thing {
+func (m *MockThingService) GetThings() []capture.Thing {
 	args := m.Called()
-	return args.Get(0).([]Thing)
+	return args.Get(0).([]capture.Thing)
 }
 
-func (m *MockThingService) ClarifyThing(thingID int) (*ClarifiedData, error) {
+func (m *MockThingService) ClarifyThing(thingID int) (*capture.ClarifiedData, error) {
 	args := m.Called(thingID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*ClarifiedData), args.Error(1)
+	return args.Get(0).(*capture.ClarifiedData), args.Error(1)
 }
 
 func (m *MockThingService) MarkThingAsProcessed(thingID int) error {
@@ -137,17 +138,17 @@ func TestThingHandler_AddThing_Unit(t *testing.T) {
 	}{
 		{
 			name: "Valid thing should call service and return created thing",
-			requestBody: Thing{
+			requestBody: capture.Thing{
 				Title:       "Test Thing",
 				Description: "Test Description",
-				Status:      Pending,
+				Status:      capture.Pending,
 			},
 			setupMock: func(m *MockThingService) {
-				createdThing := &Thing{
+				createdThing := &capture.Thing{
 					ID:          1,
 					Title:       "Test Thing",
 					Description: "Test Description",
-					Status:      Pending,
+					Status:      capture.Pending,
 				}
 				m.On("AddThing", mock.AnythingOfType("capture.Thing")).Return(createdThing, nil)
 			},
@@ -155,13 +156,13 @@ func TestThingHandler_AddThing_Unit(t *testing.T) {
 		},
 		{
 			name: "Service error should return bad request",
-			requestBody: Thing{
+			requestBody: capture.Thing{
 				Title:       "",
 				Description: "Test Description",
-				Status:      Pending,
+				Status:      capture.Pending,
 			},
 			setupMock: func(m *MockThingService) {
-				m.On("AddThing", mock.AnythingOfType("capture.Thing")).Return((*Thing)(nil), errors.New("thing title cannot be empty"))
+				m.On("AddThing", mock.AnythingOfType("capture.Thing")).Return((*capture.Thing)(nil), errors.New("thing title cannot be empty"))
 			},
 			expectedStatus: http.StatusBadRequest,
 			expectedError:  "thing title cannot be empty",
@@ -216,7 +217,7 @@ func TestThingHandler_AddThing_Unit(t *testing.T) {
 			}
 			
 			if tt.expectedStatus == http.StatusCreated {
-				var response Thing
+				var response capture.Thing
 				err := json.Unmarshal(w.Body.Bytes(), &response)
 				if err != nil {
 					t.Errorf("AddThing() failed to parse response: %v", err)
@@ -238,10 +239,10 @@ func TestThingHandler_GetThings_Unit(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	mockThingService := &MockThingService{}
 	mockActionService := &MockActionService{}
-	
-	expectedThings := []Thing{
-		{ID: 1, Title: "Thing 1", Description: "Desc 1", Status: Pending},
-		{ID: 2, Title: "Thing 2", Description: "Desc 2", Status: Done},
+
+	expectedThings := []capture.Thing{
+		{ID: 1, Title: "Thing 1", Description: "Desc 1", Status: capture.Pending},
+		{ID: 2, Title: "Thing 2", Description: "Desc 2", Status: capture.Done},
 	}
 	
 	mockThingService.On("GetThings").Return(expectedThings)
@@ -259,8 +260,8 @@ func TestThingHandler_GetThings_Unit(t *testing.T) {
 	if w.Code != http.StatusOK {
 		t.Errorf("GetThings() status = %d, expected %d", w.Code, http.StatusOK)
 	}
-	
-	var response []Thing
+
+	var response []capture.Thing
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	if err != nil {
 		t.Errorf("GetThings() failed to parse response: %v", err)
@@ -288,7 +289,7 @@ func TestThingHandler_ClarifyThing_Unit(t *testing.T) {
 			name:    "Valid thing ID should clarify and create action",
 			thingID: "1",
 			setupThingMock: func(m *MockThingService) {
-				clarifiedData := &ClarifiedData{
+				clarifiedData := &capture.ClarifiedData{
 					Title:       "Test Thing",
 					Description: "Test Description",
 					Priority:    "normal",
@@ -321,7 +322,7 @@ func TestThingHandler_ClarifyThing_Unit(t *testing.T) {
 			name:    "Non-existent thing should return not found",
 			thingID: "999",
 			setupThingMock: func(m *MockThingService) {
-				m.On("ClarifyThing", 999).Return((*ClarifiedData)(nil), errors.New("thing not found"))
+				m.On("ClarifyThing", 999).Return((*capture.ClarifiedData)(nil), errors.New("thing not found"))
 			},
 			setupActionMock: func(m *MockActionService) {},
 			expectedStatus: http.StatusNotFound,

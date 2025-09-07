@@ -1,6 +1,6 @@
 //go:build acceptance
 
-package capture
+package web
 
 import (
 	"bytes"
