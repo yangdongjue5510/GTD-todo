@@ -18,7 +18,7 @@ func TestInmemoryThingService_AddThing(t *testing.T) {
 			thing: Thing{
 				Title:       "Test Thing",
 				Description: "Test Description",
-				Status:      Pending,
+				Status:      Active,
 			},
 			wantError: false,
 		},
@@ -27,7 +27,7 @@ func TestInmemoryThingService_AddThing(t *testing.T) {
 			thing: Thing{
 				Title:       "",
 				Description: "Test Description",
-				Status:      Pending,
+				Status:      Active,
 			},
 			wantError: true,
 			errorMsg:  "thing title cannot be empty",
@@ -80,7 +80,7 @@ func TestInmemoryThingService_GetThings(t *testing.T) {
 	
 	// given
 	service := NewInmemoryThingService()
-	thing1 := Thing{Title: "Thing 1", Description: "Desc 1", Status: Pending}
+	thing1 := Thing{Title: "Thing 1", Description: "Desc 1", Status: Active}
 	thing2 := Thing{Title: "Thing 2", Description: "Desc 2", Status: Done}
 	
 	service.AddThing(thing1)
@@ -117,7 +117,7 @@ func TestInmemoryThingService_ClarifyThing(t *testing.T) {
 			setupThing: &Thing{
 				Title:       "Test Thing",
 				Description: "Test Description",
-				Status:      Pending,
+				Status:      Active,
 			},
 			thingID:   1,
 			wantError: false,
@@ -194,7 +194,7 @@ func TestInmemoryThingService_MarkThingAsProcessed(t *testing.T) {
 			setupThing: &Thing{
 				Title:       "Test Thing",
 				Description: "Test Description",
-				Status:      Pending,
+				Status:      Active,
 			},
 			thingID:   1,
 			wantError: false,

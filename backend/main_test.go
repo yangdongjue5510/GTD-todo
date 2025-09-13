@@ -3,6 +3,7 @@ package main
 import (
 	"testing"
 	"yangdongju/gtd-todo/capture"
+	"yangdongju/gtd-todo/web"
 	"yangdongju/gtd-todo/workflow"
 
 	"github.com/gin-gonic/gin"
@@ -131,7 +132,7 @@ func TestMain_ServicesInitialization(t *testing.T) {
 	}
 	
 	// Verify services can be used to create handler
-	handler := capture.NewThingHandler(thingService, actionService)
+	handler := web.NewThingHandler(thingService, actionService)
 	if handler == nil {
 		t.Error("NewThingHandler() should return non-nil handler")
 	}

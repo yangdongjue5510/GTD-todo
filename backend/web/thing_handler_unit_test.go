@@ -141,14 +141,14 @@ func TestThingHandler_AddThing_Unit(t *testing.T) {
 			requestBody: capture.Thing{
 				Title:       "Test Thing",
 				Description: "Test Description",
-				Status:      capture.Pending,
+				Status:      capture.Active,
 			},
 			setupMock: func(m *MockThingService) {
 				createdThing := &capture.Thing{
 					ID:          1,
 					Title:       "Test Thing",
 					Description: "Test Description",
-					Status:      capture.Pending,
+					Status:      capture.Active,
 				}
 				m.On("AddThing", mock.AnythingOfType("capture.Thing")).Return(createdThing, nil)
 			},
@@ -159,7 +159,7 @@ func TestThingHandler_AddThing_Unit(t *testing.T) {
 			requestBody: capture.Thing{
 				Title:       "",
 				Description: "Test Description",
-				Status:      capture.Pending,
+				Status:      capture.Active,
 			},
 			setupMock: func(m *MockThingService) {
 				m.On("AddThing", mock.AnythingOfType("capture.Thing")).Return((*capture.Thing)(nil), errors.New("thing title cannot be empty"))
@@ -241,7 +241,7 @@ func TestThingHandler_GetThings_Unit(t *testing.T) {
 	mockActionService := &MockActionService{}
 
 	expectedThings := []capture.Thing{
-		{ID: 1, Title: "Thing 1", Description: "Desc 1", Status: capture.Pending},
+		{ID: 1, Title: "Thing 1", Description: "Desc 1", Status: capture.Active},
 		{ID: 2, Title: "Thing 2", Description: "Desc 2", Status: capture.Done},
 	}
 	
