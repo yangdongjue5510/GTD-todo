@@ -17,12 +17,12 @@ func TestAddThing_validateIdAssignment(t *testing.T) {
 	
 	tests := []struct {
 		name        string
-		thing       Thing
+		thing       *Thing
 		expectedID  int
 	}{
 		{
 			name: "첫 번째 Thing 추가",
-			thing: Thing{
+			thing: &Thing{
 				Title:       "첫 번째 일",
 				Description: "첫 번째 일 설명",
 				Status:      Active,
@@ -31,7 +31,7 @@ func TestAddThing_validateIdAssignment(t *testing.T) {
 		},
 		{
 			name: "두 번째 Thing 추가",
-			thing: Thing{
+			thing: &Thing{
 				Title:       "두 번째 일",
 				Description: "두 번째 일 설명", 
 				Status:      Active,
@@ -60,8 +60,8 @@ func TestGetThings(t *testing.T) {
 	
 	
 	// Thing 추가 후 조회
-	thing1 := Thing{Title: "첫 번째", Description: "설명1", Status: Active}
-	thing2 := Thing{Title: "두 번째", Description: "설명2", Status: Done}
+	thing1 := &Thing{Title: "첫 번째", Description: "설명1", Status: Active}
+	thing2 := &Thing{Title: "두 번째", Description: "설명2", Status: Done}
 	
 	repo.AddThing(thing1)
 	repo.AddThing(thing2)
@@ -100,7 +100,7 @@ func TestGetThingByID(t *testing.T) {
 	repo := NewInmemoryThingRepository()
 	
 	// Thing 추가 후 조회
-	originalThing := Thing{
+	originalThing := &Thing{
 		Title:       "테스트 Thing",
 		Description: "테스트 설명",
 		Status:      Active,

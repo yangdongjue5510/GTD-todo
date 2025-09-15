@@ -1,247 +1,188 @@
 package capture
 
 import (
+	"errors"
 	"testing"
+
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestInmemoryThingService_AddThing(t *testing.T) {
-	t.Parallel()
+func TestNewThingService(t *testing.T) {
+	// given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	repo := NewMockThingRepository(ctrl)
+	service := NewThingService(repo)
 
-	tests := []struct {
-		name        string
-		thing       Thing
-		wantError   bool
-		errorMsg    string
-	}{
-		{
-			name: "Valid thing should be added successfully",
-			thing: Thing{
-				Title:       "Test Thing",
-				Description: "Test Description",
-				Status:      Active,
-			},
-			wantError: false,
-		},
-		{
-			name: "Thing with empty title should return error",
-			thing: Thing{
-				Title:       "",
-				Description: "Test Description",
-				Status:      Active,
-			},
-			wantError: true,
-			errorMsg:  "thing title cannot be empty",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			
-			// given
-			service := NewInmemoryThingService()
-			
-			// when
-			createdThing, err := service.AddThing(tt.thing)
-			
-			// then
-			if tt.wantError {
-				if err == nil {
-					t.Errorf("AddThing() expected error but got nil")
-				} else if err.Error() != tt.errorMsg {
-					t.Errorf("AddThing() error = %v, expected %v", err.Error(), tt.errorMsg)
-				}
-				if createdThing != nil {
-					t.Error("AddThing() should return nil on error")
-				}
-			} else {
-				if err != nil {
-					t.Errorf("AddThing() unexpected error = %v", err)
-				}
-				if createdThing == nil {
-					t.Error("AddThing() should return created thing on success")
-				}
-				if createdThing.ID != 1 {
-					t.Errorf("Expected ID 1, got %d", createdThing.ID)
-				}
-				
-				// Verify thing was added to service
-				things := service.GetThings()
-				if len(things) != 1 {
-					t.Errorf("Expected 1 thing, got %d", len(things))
-				}
-			}
-		})
+	if service == nil {
+		t.Fatal("Expected non-nil ThingService")
 	}
 }
 
-func TestInmemoryThingService_GetThings(t *testing.T) {
-	t.Parallel()
-	
+func TestThingService_AddThing_Success(t *testing.T) {
 	// given
-	service := NewInmemoryThingService()
-	thing1 := Thing{Title: "Thing 1", Description: "Desc 1", Status: Active}
-	thing2 := Thing{Title: "Thing 2", Description: "Desc 2", Status: Done}
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 	
-	service.AddThing(thing1)
-	service.AddThing(thing2)
+	mockRepo := NewMockThingRepository(ctrl)
+	service := NewThingService(mockRepo)
+	
+	inputThing := &Thing{
+		Title:       "Test Thing",
+		Description: "Test Description",
+		Status:      Active,
+	}
+	
+	expectedThing := &Thing{
+		ID:          1,
+		Title:       "Test Thing",
+		Description: "Test Description",
+		Status:      Active,
+	}
 	
 	// when
-	things := service.GetThings()
+	mockRepo.EXPECT().
+		AddThing(inputThing).
+		Return(expectedThing, nil).
+		Times(1)
 	
 	// then
-	if len(things) != 2 {
-		t.Errorf("Expected 2 things, got %d", len(things))
+	result, err := service.AddThing(inputThing)
+	
+	assert.NoError(t, err)
+	assert.Equal(t, expectedThing, result)
+}
+
+func TestThingService_AddThing_RepositoryError(t *testing.T) {
+	// given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	
+	mockRepo := NewMockThingRepository(ctrl)
+	service := NewThingService(mockRepo)
+	
+	inputThing := &Thing{
+		Title:       "Test Thing",
+		Description: "Test Description",
+		Status:      Active,
 	}
 	
-	// Verify immutability (should return copy, not reference)
-	things[0].Title = "Modified"
-	originalThings := service.GetThings()
-	if originalThings[0].Title == "Modified" {
-		t.Error("GetThings() should return a copy, not reference")
-	}
+	expectedError := errors.New("repository error")
+	
+	// when
+	mockRepo.EXPECT().
+		AddThing(inputThing).
+		Return(nil, expectedError).
+		Times(1)
+	
+	// then
+	result, err := service.AddThing(inputThing)
+	
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.Equal(t, expectedError, err)
 }
 
-func TestInmemoryThingService_ClarifyThing(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name      string
-		setupThing *Thing
-		thingID   int
-		wantError bool
-		errorMsg  string
-	}{
-		{
-			name: "Valid thing ID should return clarified data",
-			setupThing: &Thing{
-				Title:       "Test Thing",
-				Description: "Test Description",
-				Status:      Active,
-			},
-			thingID:   1,
-			wantError: false,
-		},
-		{
-			name:      "Non-existent thing ID should return error",
-			thingID:   999,
-			wantError: true,
-			errorMsg:  "thing not found",
-		},
+func TestThingService_GetThings_Success(t *testing.T) {
+	// given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	
+	mockRepo := NewMockThingRepository(ctrl)
+	service := NewThingService(mockRepo)
+	
+	expectedThings := []*Thing{
+		{ID: 1, Title: "Thing 1", Description: "Desc 1", Status: Active},
+		{ID: 2, Title: "Thing 2", Description: "Desc 2", Status: Done},
 	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			
-			// given
-			service := NewInmemoryThingService()
-			if tt.setupThing != nil {
-				service.AddThing(*tt.setupThing)
-			}
-			
-			// when
-			clarified, err := service.ClarifyThing(tt.thingID)
-			
-			// then
-			if tt.wantError {
-				if err == nil {
-					t.Errorf("ClarifyThing() expected error but got nil")
-				} else if err.Error() != tt.errorMsg {
-					t.Errorf("ClarifyThing() error = %v, expected %v", err.Error(), tt.errorMsg)
-				}
-				if clarified != nil {
-					t.Error("ClarifyThing() should return nil on error")
-				}
-			} else {
-				if err != nil {
-					t.Errorf("ClarifyThing() unexpected error = %v", err)
-				}
-				if clarified == nil {
-					t.Error("ClarifyThing() should return clarified data on success")
-				}
-				
-				// Verify clarified data structure
-				if clarified.Title != tt.setupThing.Title {
-					t.Errorf("ClarifyThing() Title = %v, expected %v", clarified.Title, tt.setupThing.Title)
-				}
-				if clarified.Priority != "normal" {
-					t.Errorf("ClarifyThing() Priority = %v, expected normal", clarified.Priority)
-				}
-				if clarified.Context != "inbox" {
-					t.Errorf("ClarifyThing() Context = %v, expected inbox", clarified.Context)
-				}
-				if clarified.SourceID != tt.thingID {
-					t.Errorf("ClarifyThing() SourceID = %v, expected %v", clarified.SourceID, tt.thingID)
-				}
-			}
-		})
-	}
+	
+	// when
+	mockRepo.EXPECT().
+		GetThings().
+		Return(expectedThings, nil).
+		Times(1)
+	
+	// then
+	result, err := service.GetThings()
+	
+	assert.NoError(t, err)
+	assert.Equal(t, expectedThings, result)
+	assert.Len(t, result, 2)
 }
 
-func TestInmemoryThingService_MarkThingAsProcessed(t *testing.T) {
-	t.Parallel()
+func TestThingService_GetThings_RepositoryError(t *testing.T) {
+	// given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	
+	mockRepo := NewMockThingRepository(ctrl)
+	service := NewThingService(mockRepo)
+	
+	expectedError := errors.New("database connection error")
+	
+	// when
+	mockRepo.EXPECT().
+		GetThings().
+		Return(nil, expectedError).
+		Times(1)
+	
+	// then
+	result, err := service.GetThings()
+	
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.Equal(t, expectedError, err)
+}
 
-	tests := []struct {
-		name      string
-		setupThing *Thing
-		thingID   int
-		wantError bool
-		errorMsg  string
-	}{
-		{
-			name: "Valid thing ID should be marked as Done",
-			setupThing: &Thing{
-				Title:       "Test Thing",
-				Description: "Test Description",
-				Status:      Active,
-			},
-			thingID:   1,
-			wantError: false,
-		},
-		{
-			name:      "Non-existent thing ID should return error",
-			thingID:   999,
-			wantError: true,
-			errorMsg:  "thing not found",
-		},
+func TestThingService_MarkThingAsProcessed_Success(t *testing.T) {
+	// given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	
+	mockRepo := NewMockThingRepository(ctrl)
+	service := NewThingService(mockRepo)
+	
+	thingID := 1
+	foundThing := &Thing{
+		ID:          thingID,
+		Title:       "Test Thing",
+		Description: "Test Description",
+		Status:      Active,
 	}
+	
+	// when
+	mockRepo.EXPECT().
+		GetThingByID(thingID).
+		Return(foundThing, nil).
+		Times(1)
+	
+	// then
+	err := service.MarkThingAsProcessed(thingID)
+	
+	assert.NoError(t, err)
+	assert.Equal(t, Done, foundThing.Status) // Process() 호출로 상태 변경 확인
+}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			
-			// given
-			service := NewInmemoryThingService()
-			if tt.setupThing != nil {
-				service.AddThing(*tt.setupThing)
-			}
-			
-			// when
-			err := service.MarkThingAsProcessed(tt.thingID)
-			
-			// then
-			if tt.wantError {
-				if err == nil {
-					t.Errorf("MarkThingAsProcessed() expected error but got nil")
-				} else if err.Error() != tt.errorMsg {
-					t.Errorf("MarkThingAsProcessed() error = %v, expected %v", err.Error(), tt.errorMsg)
-				}
-			} else {
-				if err != nil {
-					t.Errorf("MarkThingAsProcessed() unexpected error = %v", err)
-				}
-				
-				// Verify thing status was updated
-				things := service.GetThings()
-				if len(things) == 0 {
-					t.Error("Expected at least 1 thing")
-					return
-				}
-				if things[0].Status != Done {
-					t.Errorf("Expected status Done, got %v", things[0].Status)
-				}
-			}
-		})
-	}
+func TestThingService_MarkThingAsProcessed_ThingNotFound(t *testing.T) {
+	// given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	
+	mockRepo := NewMockThingRepository(ctrl)
+	service := NewThingService(mockRepo)
+	
+	thingID := 999
+	
+	// when
+	mockRepo.EXPECT().
+		GetThingByID(thingID).
+		Return(nil, ErrThingNotFound).
+		Times(1)
+	
+	// then
+	err := service.MarkThingAsProcessed(thingID)
+	
+	assert.Error(t, err)
+	assert.Equal(t, ErrThingNotFound, err)
 }

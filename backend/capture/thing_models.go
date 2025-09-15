@@ -15,6 +15,10 @@ const (
 	Done
 )
 
+func (s *Thing) Process() {
+	s.Status = Done
+}
+
 func (s Status) String() string {
 	switch s {
 	case Active:

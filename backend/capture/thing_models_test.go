@@ -42,3 +42,23 @@ func TestStatus_String(t *testing.T) {
 		})
 	}
 }
+
+func TestThingProcess(t *testing.T) {
+	t.Parallel()
+
+	// given
+	thing := &Thing{
+		ID:          1,
+		Title: 	 "Sample Thing",
+		Description: "This is a sample thing",
+		Status: Active,
+	}
+	
+	// when
+	thing.Process()
+
+	// then
+	if thing.Status != Done {
+		t.Errorf("Expected status to be Done, got %v", thing.Status)
+	}
+}

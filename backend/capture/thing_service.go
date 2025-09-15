@@ -1,7 +1,6 @@
 package capture
 
 import (
-	"errors"
 	"time"
 )
 
@@ -15,77 +14,43 @@ type ClarifiedData struct {
 	SourceID    int // Original Thing ID
 }
 
-type ThingService interface {
+type AddThingUseCase interface {
 	AddThing(thing Thing) (*Thing, error)
-	GetThings() []Thing
-	ClarifyThing(thingID int) (*ClarifiedData, error)
-	MarkThingAsProcessed(thingID int) error
 }
 
-type InmemoryThingService struct {
-	things   []Thing
-	sequence int
+type GetThingUseCase interface {
+	GetThingByID(id int) (*Thing, error)
 }
 
-func NewInmemoryThingService() ThingService {
-	return &InmemoryThingService{
-		things:   make([]Thing, 0),
-		sequence: 0,
-	}
+type GetThingsUseCase interface {
+	GetThings() ([]Thing, error)
 }
 
-func (s *InmemoryThingService) AddThing(thing Thing) (*Thing, error) {
-	if thing.Title == "" {
-		return nil, errors.New("thing title cannot be empty")
-	}
-	
-	s.sequence++
-	thing.ID = s.sequence
-	s.things = append(s.things, thing)
-	return &s.things[len(s.things)-1], nil
+type UpdateThingStatusUseCase interface {
+	UpdateThingStatus(id int, status Status) error
 }
 
-func (s *InmemoryThingService) GetThings() []Thing {
-	copiedThings := make([]Thing, len(s.things))
-	copy(copiedThings, s.things)
-	return copiedThings
+type ThingService struct {
+	thingRepository ThingRepository
 }
 
-func (s *InmemoryThingService) ClarifyThing(thingID int) (*ClarifiedData, error) {
-	// Find the thing by ID
-	var targetThing *Thing
-	for i, thing := range s.things {
-		if thing.ID == thingID {
-			targetThing = &s.things[i]
-			break
-		}
-	}
-	
-	if targetThing == nil {
-		return nil, errors.New("thing not found")
-	}
-	
-	// Process the thing and extract clarified data
-	clarified := &ClarifiedData{
-		Title:       targetThing.Title,
-		Description: targetThing.Description,
-		Priority:    "normal", // Default priority, can be enhanced with AI or user input
-		DueDate:     nil,      // Could be extracted from description text
-		Context:     "inbox",  // Default context
-		SourceID:    thingID,
-	}
-	
-	return clarified, nil
+func NewThingService(repo ThingRepository) *ThingService {
+	return &ThingService{thingRepository: repo}
 }
 
-func (s *InmemoryThingService) MarkThingAsProcessed(thingID int) error {
-	// Find and mark the thing as done
-	for i, thing := range s.things {
-		if thing.ID == thingID {
-			s.things[i].Status = Done
-			return nil
-		}
+func (s *ThingService) AddThing(thing *Thing) (*Thing, error) {
+	return s.thingRepository.AddThing(thing)
+}
+
+func (s *ThingService) GetThings() ([]*Thing, error) {
+	return s.thingRepository.GetThings()
+}
+
+func (s *ThingService) MarkThingAsProcessed(thingID int) error {
+	foundThing, err := s.thingRepository.GetThingByID(thingID)
+	if err != nil {
+		return err
 	}
-	
-	return errors.New("thing not found")
+	foundThing.Process()
+	return nil
 }
