@@ -1,11 +1,13 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
-	"yangdongju/gtd-todo/capture"
-	"yangdongju/gtd-todo/workflow"
-	"github.com/gin-contrib/cors"
 	"time"
+	"yangdongju/gtd-todo/capture"
+	"yangdongju/gtd-todo/web"
+	"yangdongju/gtd-todo/workflow"
+
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 )
 func main() {
 	r := gin.Default()
@@ -28,7 +30,7 @@ func thingRoutes(r *gin.Engine) {
 	thingService := capture.NewInmemoryThingService()
 	
 	// Create handlers
-	handler := capture.NewThingHandler(thingService, actionService)
+	handler := web.NewThingHandler(thingService, actionService)
 	
-	capture.SetupRoutes(r, handler)
+	web.SetupRoutes(r, handler)
 }

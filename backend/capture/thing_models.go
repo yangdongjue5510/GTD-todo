@@ -11,17 +11,18 @@ type Thing struct {
 type Status int
 
 const (
-	Pending Status = iota
-	Someday
+	Active Status = iota
 	Done
 )
 
+func (s *Thing) Process() {
+	s.Status = Done
+}
+
 func (s Status) String() string {
 	switch s {
-	case Pending:
-		return "Pending"
-	case Someday:
-		return "Someday"
+	case Active:
+		return "Active"
 	case Done:
 		return "Done"
 	default:

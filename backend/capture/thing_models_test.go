@@ -12,14 +12,9 @@ func TestStatus_String(t *testing.T) {
 		expected string
 	}{
 		{
-			name:     "Pending status returns correct string",
-			status:   Pending,
-			expected: "Pending",
-		},
-		{
-			name:     "Someday status returns correct string",
-			status:   Someday,
-			expected: "Someday",
+			name:     "Active status returns correct string",
+			status:   Active,
+			expected: "Active",
 		},
 		{
 			name:     "Done status returns correct string",
@@ -45,5 +40,25 @@ func TestStatus_String(t *testing.T) {
 				t.Errorf("Status.String() = %v, expected %v", result, tt.expected)
 			}
 		})
+	}
+}
+
+func TestThingProcess(t *testing.T) {
+	t.Parallel()
+
+	// given
+	thing := &Thing{
+		ID:          1,
+		Title: 	 "Sample Thing",
+		Description: "This is a sample thing",
+		Status: Active,
+	}
+	
+	// when
+	thing.Process()
+
+	// then
+	if thing.Status != Done {
+		t.Errorf("Expected status to be Done, got %v", thing.Status)
 	}
 }
