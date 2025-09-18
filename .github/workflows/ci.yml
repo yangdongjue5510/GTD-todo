@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Test and Build
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: backend
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.24.5'
+        cache-dependency-path: backend/go.sum
+
+    - name: Cache Go modules
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/go-build
+          ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('backend/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Cache Go tools
+      uses: actions/cache@v4
+      with:
+        path: ~/go/bin
+        key: go-tools-${{ runner.os }}-${{ hashFiles('backend/tools.go') }}
+        restore-keys: |
+          go-tools-${{ runner.os }}-
+
+    - name: Download dependencies
+      run: go mod download
+
+    - name: Add Go bin to PATH
+      run: echo "$HOME/go/bin" >> $GITHUB_PATH
+
+    - name: Install development tools
+      run: |
+        go install github.com/golang/mock/mockgen@latest
+
+    - name: Verify tools installation
+      run: |
+        mockgen --version
+
+    - name: Run CI pipeline
+      run: make ci
+
+    - name: Upload coverage reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: coverage-report
+        path: |
+          backend/coverage.out
+          backend/coverage.html
+        retention-days: 30
+
+    - name: Comment coverage on PR
+      if: github.event_name == 'pull_request'
+      run: |
+        coverage=$(go tool cover -func=coverage.out | grep "total:" | awk '{print $3}')
+        echo "📊 Test Coverage: $coverage" >> $GITHUB_STEP_SUMMARY

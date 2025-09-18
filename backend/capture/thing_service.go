@@ -1,6 +1,9 @@
+//go:generate mockgen -source=thing_service.go -destination=mock_thing_service.go -package=capture
+
 package capture
 
 import (
+	"errors"
 	"time"
 )
 
@@ -12,6 +15,12 @@ type ClarifiedData struct {
 	DueDate     *time.Time
 	Context     string
 	SourceID    int // Original Thing ID
+}
+
+type ThingService interface {
+	AddThing(thing *Thing) (*Thing, error)
+	GetThings() ([]*Thing, error)
+	MarkThingAsProcessed(thingID int) error
 }
 
 type AddThingUseCase interface {
@@ -30,23 +39,26 @@ type UpdateThingStatusUseCase interface {
 	UpdateThingStatus(id int, status Status) error
 }
 
-type ThingService struct {
+type ThingServiceImpl struct {
 	thingRepository ThingRepository
 }
 
-func NewThingService(repo ThingRepository) *ThingService {
-	return &ThingService{thingRepository: repo}
+func NewThingService(repo ThingRepository) ThingService {
+	return &ThingServiceImpl{thingRepository: repo}
 }
 
-func (s *ThingService) AddThing(thing *Thing) (*Thing, error) {
+func (s *ThingServiceImpl) AddThing(thing *Thing) (*Thing, error) {
+	if thing.Title == "" {
+		return nil, errors.New("thing title cannot be empty")
+	}
 	return s.thingRepository.AddThing(thing)
 }
 
-func (s *ThingService) GetThings() ([]*Thing, error) {
+func (s *ThingServiceImpl) GetThings() ([]*Thing, error) {
 	return s.thingRepository.GetThings()
 }
 
-func (s *ThingService) MarkThingAsProcessed(thingID int) error {
+func (s *ThingServiceImpl) MarkThingAsProcessed(thingID int) error {
 	foundThing, err := s.thingRepository.GetThingByID(thingID)
 	if err != nil {
 		return err
