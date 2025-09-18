@@ -54,6 +54,31 @@ func TestThingService_AddThing_Success(t *testing.T) {
 	assert.Equal(t, expectedThing, result)
 }
 
+func TestThingService_AddThing_EmptyTitle(t *testing.T) {
+	// given
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	
+	mockRepo := NewMockThingRepository(ctrl)
+	service := NewThingService(mockRepo)
+	
+	inputThing := &Thing{
+		Title:       "",
+		Description: "Test Description",
+		Status:      Active,
+	}
+	
+	// No repository call expected since validation should fail first
+	
+	// when
+	result, err := service.AddThing(inputThing)
+	
+	// then
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.Equal(t, "thing title cannot be empty", err.Error())
+}
+
 func TestThingService_AddThing_RepositoryError(t *testing.T) {
 	// given
 	ctrl := gomock.NewController(t)
