@@ -35,12 +35,23 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-go-
 
+    - name: Cache Go tools
+      uses: actions/cache@v4
+      with:
+        path: ~/go/bin
+        key: go-tools-${{ runner.os }}-${{ hashFiles('backend/tools.go') }}
+        restore-keys: |
+          go-tools-${{ runner.os }}-
+
     - name: Download dependencies
       run: go mod download
 
+    - name: Add Go bin to PATH
+      run: echo "$HOME/go/bin" >> $GITHUB_PATH
+
     - name: Install development tools
       run: |
-        go install $(go list -f '{{range .Imports}}{{.}} {{end}}' tools.go)
+        go install github.com/golang/mock/mockgen@latest
 
     - name: Verify tools installation
       run: |
