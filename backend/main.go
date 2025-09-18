@@ -4,7 +4,6 @@ import (
 	"time"
 	"yangdongju/gtd-todo/capture"
 	"yangdongju/gtd-todo/web"
-	"yangdongju/gtd-todo/workflow"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -26,11 +25,11 @@ func main() {
 
 func thingRoutes(r *gin.Engine) {
 	// Create independent domain services
-	actionService := workflow.NewInmemoryActionService()
-	thingService := capture.NewInmemoryThingService()
+	thingRepository := capture.NewInmemoryThingRepository()
+	thingService := capture.NewThingService(thingRepository)
 	
 	// Create handlers
-	handler := web.NewThingHandler(thingService, actionService)
+	handler := web.NewThingHandler(thingService)
 	
 	web.SetupRoutes(r, handler)
 }
