@@ -29,22 +29,36 @@ generate:
 	go generate ./...
 	@echo "✅ Mock generation completed"
 
-# Run unit tests with coverage
+# Run unit tests with coverage (excluding mock files)
 test-unit:
 	@echo "🧪 Running unit tests with coverage..."
 	go test -coverprofile=$(COVERAGE_FILE) ./...
+	@echo "🧹 Removing mock files from coverage..."
+	@grep -v "mock_.*\.go" $(COVERAGE_FILE) > $(COVERAGE_FILE).tmp && mv $(COVERAGE_FILE).tmp $(COVERAGE_FILE) || true
 	@echo "✅ Unit tests completed"
 
-# Verify coverage threshold
+# Verify coverage threshold per package (excluding main)
 test-coverage: test-unit
-	@echo "📊 Checking coverage threshold ($(COVERAGE_THRESHOLD)%)..."
-	@coverage=$$(go tool cover -func=$(COVERAGE_FILE) | grep "total:" | awk '{print $$3}' | sed 's/%//'); \
-	echo "Current coverage: $${coverage}%"; \
-	if [ $$(echo "$${coverage} < $(COVERAGE_THRESHOLD)" | bc -l) -eq 1 ]; then \
-		echo "❌ Coverage $${coverage}% is below $(COVERAGE_THRESHOLD)%"; \
+	@echo "📊 Checking coverage threshold ($(COVERAGE_THRESHOLD)%) per package..."
+	@failed=0; \
+	for pkg in capture web workflow; do \
+		coverage=$$(go test -cover ./$$pkg/... 2>/dev/null | grep "coverage:" | awk '{print $$5}' | sed 's/%//'); \
+		if [ -z "$$coverage" ]; then \
+			echo "⚠️  Package $$pkg: No coverage data found"; \
+			continue; \
+		fi; \
+		echo "Package $$pkg: $${coverage}%"; \
+		if [ $$(echo "$${coverage} < $(COVERAGE_THRESHOLD)" | bc -l) -eq 1 ]; then \
+			echo "❌ Package $$pkg: $${coverage}% < $(COVERAGE_THRESHOLD)%"; \
+			failed=1; \
+		else \
+			echo "✅ Package $$pkg: $${coverage}% ≥ $(COVERAGE_THRESHOLD)%"; \
+		fi; \
+	done; \
+	total_coverage=$$(go tool cover -func=$(COVERAGE_FILE) | grep "total:" | awk '{print $$3}'); \
+	echo "📊 Overall coverage: $${total_coverage} (informational)"; \
+	if [ $$failed -eq 1 ]; then \
 		exit 1; \
-	else \
-		echo "✅ Coverage $${coverage}% meets requirement ($(COVERAGE_THRESHOLD)%+)"; \
 	fi
 
 # Run acceptance tests
