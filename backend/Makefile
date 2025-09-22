@@ -34,19 +34,21 @@ test-unit:
 	@echo "🧪 Running unit tests with coverage..."
 	go test -coverprofile=$(COVERAGE_FILE) ./...
 	@echo "🧹 Removing mock files from coverage..."
-	@grep -v "mock_.*\.go" $(COVERAGE_FILE) > $(COVERAGE_FILE).tmp && mv $(COVERAGE_FILE).tmp $(COVERAGE_FILE) || true
+	@grep -v "/mock_.*\.go:" $(COVERAGE_FILE) > $(COVERAGE_FILE).tmp && mv $(COVERAGE_FILE).tmp $(COVERAGE_FILE) || true
+	@grep -v "_mock\.go:" $(COVERAGE_FILE) > $(COVERAGE_FILE).tmp && mv $(COVERAGE_FILE).tmp $(COVERAGE_FILE) || true
 	@echo "✅ Unit tests completed"
 
-# Verify coverage threshold per package (excluding main)
+# Verify coverage threshold per package (excluding main and mocks)
 test-coverage: test-unit
 	@echo "📊 Checking coverage threshold ($(COVERAGE_THRESHOLD)%) per package..."
 	@failed=0; \
 	for pkg in capture web workflow; do \
-		coverage=$$(go test -cover ./$$pkg/... 2>/dev/null | grep "coverage:" | awk '{print $$5}' | sed 's/%//'); \
-		if [ -z "$$coverage" ]; then \
+		pkg_lines=$$(go tool cover -func=$(COVERAGE_FILE) | grep "yangdongju/gtd-todo/$$pkg"); \
+		if [ -z "$$pkg_lines" ]; then \
 			echo "⚠️  Package $$pkg: No coverage data found"; \
 			continue; \
 		fi; \
+		coverage=$$(echo "$$pkg_lines" | awk '{covered+=$$4*substr($$3,1,length($$3)-1)/100; total+=$$4} END {if(total>0) printf "%.1f", covered/total*100; else print "0"}'); \
 		echo "Package $$pkg: $${coverage}%"; \
 		if [ $$(echo "$${coverage} < $(COVERAGE_THRESHOLD)" | bc -l) -eq 1 ]; then \
 			echo "❌ Package $$pkg: $${coverage}% < $(COVERAGE_THRESHOLD)%"; \
