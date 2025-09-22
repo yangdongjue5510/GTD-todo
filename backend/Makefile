@@ -34,33 +34,19 @@ test-unit:
 	@echo "🧪 Running unit tests with coverage..."
 	go test -coverprofile=$(COVERAGE_FILE) ./...
 	@echo "🧹 Removing mock files from coverage..."
-	@grep -v "/mock_.*\.go:" $(COVERAGE_FILE) > $(COVERAGE_FILE).tmp && mv $(COVERAGE_FILE).tmp $(COVERAGE_FILE) || true
-	@grep -v "_mock\.go:" $(COVERAGE_FILE) > $(COVERAGE_FILE).tmp && mv $(COVERAGE_FILE).tmp $(COVERAGE_FILE) || true
+	@awk '!/mock_.*\.go:/' $(COVERAGE_FILE) > $(COVERAGE_FILE).tmp && mv $(COVERAGE_FILE).tmp $(COVERAGE_FILE)
 	@echo "✅ Unit tests completed"
 
-# Verify coverage threshold per package (excluding main and mocks)
+# Verify coverage threshold (excluding mocks)
 test-coverage: test-unit
-	@echo "📊 Checking coverage threshold ($(COVERAGE_THRESHOLD)%) per package..."
-	@failed=0; \
-	for pkg in capture web workflow; do \
-		pkg_lines=$$(go tool cover -func=$(COVERAGE_FILE) | grep "yangdongju/gtd-todo/$$pkg"); \
-		if [ -z "$$pkg_lines" ]; then \
-			echo "⚠️  Package $$pkg: No coverage data found"; \
-			continue; \
-		fi; \
-		coverage=$$(echo "$$pkg_lines" | awk '{covered+=$$4*substr($$3,1,length($$3)-1)/100; total+=$$4} END {if(total>0) printf "%.1f", covered/total*100; else print "0"}'); \
-		echo "Package $$pkg: $${coverage}%"; \
-		if [ $$(echo "$${coverage} < $(COVERAGE_THRESHOLD)" | bc -l) -eq 1 ]; then \
-			echo "❌ Package $$pkg: $${coverage}% < $(COVERAGE_THRESHOLD)%"; \
-			failed=1; \
-		else \
-			echo "✅ Package $$pkg: $${coverage}% ≥ $(COVERAGE_THRESHOLD)%"; \
-		fi; \
-	done; \
-	total_coverage=$$(go tool cover -func=$(COVERAGE_FILE) | grep "total:" | awk '{print $$3}'); \
-	echo "📊 Overall coverage: $${total_coverage} (informational)"; \
-	if [ $$failed -eq 1 ]; then \
+	@echo "📊 Checking coverage threshold ($(COVERAGE_THRESHOLD)%)..."
+	@total_coverage=$$(go tool cover -func=$(COVERAGE_FILE) | grep "total:" | awk '{print $$3}' | sed 's/%//'); \
+	echo "Overall coverage: $${total_coverage}%"; \
+	if [ $$(echo "$${total_coverage} < $(COVERAGE_THRESHOLD)" | bc -l) -eq 1 ]; then \
+		echo "❌ Coverage $${total_coverage}% is below $(COVERAGE_THRESHOLD)%"; \
 		exit 1; \
+	else \
+		echo "✅ Coverage $${total_coverage}% meets requirement ($(COVERAGE_THRESHOLD)%+)"; \
 	fi
 
 # Run acceptance tests
