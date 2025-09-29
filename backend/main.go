@@ -4,6 +4,7 @@ import (
 	"time"
 	"yangdongju/gtd-todo/capture"
 	"yangdongju/gtd-todo/web"
+	"yangdongju/gtd-todo/workflow"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -19,17 +20,23 @@ func main() {
 		ExposeHeaders:    []string{"Content-Length"},
 		MaxAge:           12 * time.Hour,
 	}))
-	thingRoutes(r) // Setup the thing routes
+	setupRoutes(r) // Setup all routes
 	r.Run(":8080") // Start the server on port 8080
 }
 
-func thingRoutes(r *gin.Engine) {
+func setupRoutes(r *gin.Engine) {
 	// Create independent domain services
 	thingRepository := capture.NewInmemoryThingRepository()
 	thingService := capture.NewThingService(thingRepository)
 	
-	// Create handlers
-	handler := web.NewThingHandler(thingService)
+	actionRepository := workflow.NewInmemoryActionRepository()
+	actionService := workflow.NewActionService(actionRepository)
 	
-	web.SetupRoutes(r, handler)
+	// Create handlers
+	thingHandler := web.NewThingHandler(thingService)
+	actionHandler := web.NewActionHandler(actionService)
+	
+	// Setup routes
+	web.SetupRoutes(r, thingHandler)
+	web.SetupActionRoutes(r, actionHandler)
 }
