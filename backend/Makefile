@@ -21,7 +21,6 @@ help:
 	@echo "  clean          Clean build artifacts"
 	@echo "  coverage-html   Generate HTML coverage report"
 	@echo "  test-verbose    Run tests with verbose output"
-	@echo "  ci             Run full CI pipeline"
 
 # Generate mock files
 generate:
@@ -80,7 +79,3 @@ test-verbose:
 	@echo "🔍 Running tests with verbose output..."
 	go test -v ./...
 	@echo "✅ Verbose tests completed"
-
-# Full CI pipeline
-ci: generate test-coverage test-acceptance build
-	@echo "🎉 CI pipeline completed successfully!"
