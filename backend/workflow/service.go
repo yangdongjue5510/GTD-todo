@@ -1,3 +1,5 @@
+//go:generate mockgen -source=service.go -destination=mock_action_service.go -package=workflow
+
 package workflow
 
 import (
@@ -18,39 +20,76 @@ type ClarifiedData struct {
 type ActionService interface {
 	Save(action Action) error
 	GetActions() []Action
+	GetActionByID(id int) (*Action, error)
+	UpdateAction(id int, action Action) error
+	UpdateActionStatus(id int, status Status) error
+	DeleteAction(id int) error
 	CreateActionFromClarified(data ClarifiedData) (*Action, error)
 } 
 
-type InmemoryActionService struct {
-	actions  []Action
-	sequence int
+type ActionServiceImpl struct {
+	actionRepository ActionRepository
 }
 
-func NewInmemoryActionService() ActionService {
-	return &InmemoryActionService{
-		actions:  make([]Action, 0),
-		sequence: 0,
+func NewActionService(repo ActionRepository) ActionService {
+	return &ActionServiceImpl{
+		actionRepository: repo,
 	}
 }
 
-func (s *InmemoryActionService) Save(action Action) error {
+func (s *ActionServiceImpl) Save(action Action) error {
 	if action.Title == "" {
 		return errors.New("action title cannot be empty")
 	}
 	
-	s.sequence++
-	action.ID = s.sequence
-	s.actions = append(s.actions, action)
-	return nil
+	_, err := s.actionRepository.AddAction(&action)
+	return err
 }
 
-func (s *InmemoryActionService) GetActions() []Action {
-	copiedActions := make([]Action, len(s.actions))
-	copy(copiedActions, s.actions)
-	return copiedActions
+func (s *ActionServiceImpl) GetActions() []Action {
+	actions, err := s.actionRepository.GetActions()
+	if err != nil {
+		return []Action{}
+	}
+	
+	// Convert []*Action to []Action
+	result := make([]Action, len(actions))
+	for i, action := range actions {
+		result[i] = *action
+	}
+	return result
 }
 
-func (s *InmemoryActionService) CreateActionFromClarified(data ClarifiedData) (*Action, error) {
+func (s *ActionServiceImpl) GetActionByID(id int) (*Action, error) {
+	return s.actionRepository.GetActionByID(id)
+}
+
+func (s *ActionServiceImpl) UpdateAction(id int, action Action) error {
+	if action.Title == "" {
+		return errors.New("action title cannot be empty")
+	}
+	
+	// Preserve the ID
+	action.ID = id
+	return s.actionRepository.UpdateAction(&action)
+}
+
+func (s *ActionServiceImpl) UpdateActionStatus(id int, status Status) error {
+	existingAction, err := s.actionRepository.GetActionByID(id)
+	if err != nil {
+		return err
+	}
+	
+	// Update only the status
+	existingAction.Status = status
+	return s.actionRepository.UpdateAction(existingAction)
+}
+
+func (s *ActionServiceImpl) DeleteAction(id int) error {
+	return s.actionRepository.DeleteAction(id)
+}
+
+func (s *ActionServiceImpl) CreateActionFromClarified(data ClarifiedData) (*Action, error) {
 	if data.Title == "" {
 		return nil, errors.New("clarified data title cannot be empty")
 	}
@@ -73,11 +112,6 @@ func (s *InmemoryActionService) CreateActionFromClarified(data ClarifiedData) (*
 		action.Context = data.Context
 	}
 	
-	// Save the action
-	if err := s.Save(action); err != nil {
-		return nil, err
-	}
-	
-	// Return the created action with assigned ID
-	return &s.actions[len(s.actions)-1], nil
+	// Save the action through repository
+	return s.actionRepository.AddAction(&action)
 }
