@@ -65,15 +65,14 @@ RESTful API 엔드포인트 설계 (Phase 1 기준)
 
 ---
 
-## 응답 형식
+## 헬스체크
 
-### 성공
-```json
-{
-  "success": true,
-  "data": { /* payload */ }
-}
-```
+| Method | Endpoint | Response |
+|--------|----------|----------|
+| GET | `/api/health` | `{status}` |
+
+
+## 응답 형식
 
 ### 에러
 ```json
@@ -104,6 +103,7 @@ RESTful API 엔드포인트 설계 (Phase 1 기준)
 3. `/api/todos` (필터링: status, project_id)
 4. `/api/todos/:id/status` (상태 전환)
 5. `/api/projects` (CRUD)
+6. `/api/health` (헬스체크)
 
 **Should Have** (Phase 1.4):
 6. `/api/todos/:id/position` (순서 변경)
