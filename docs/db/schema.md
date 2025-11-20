@@ -46,18 +46,14 @@ CREATE INDEX idx_projects_user_id ON projects(user_id);
 ## 3. todos
 
 ```sql
-CREATE TYPE todo_status AS ENUM (
-    'inbox', 'next_actions', 'in_progress',
-    'done', 'someday', 'waiting_for'
-);
-
 CREATE TABLE todos (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     project_id INTEGER REFERENCES projects(id) ON DELETE SET NULL,
     title VARCHAR(500) NOT NULL,
     description TEXT,
-    status todo_status DEFAULT 'inbox',
+    status VARCHAR(20) NOT NULL DEFAULT 'inbox'
+        CHECK (status IN ('inbox', 'next_actions', 'in_progress', 'done', 'someday', 'waiting_for')),
     position INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -70,7 +66,9 @@ CREATE INDEX idx_todos_user_status ON todos(user_id, status);
 
 - `user_id` → `users(id)` CASCADE
 - `project_id` → `projects(id)` SET NULL (프로젝트 삭제 시 TODO 유지)
-- `status`: GTD 6단계 (inbox → next_actions → in_progress → done / someday / waiting_for)
+- `status`: GTD 6단계 (VARCHAR + CHECK 제약조건)
+  - 값: inbox, next_actions, in_progress, done, someday, waiting_for
+  - **ENUM 대신 VARCHAR + CHECK 선택 이유**: 애자일 방식에서 상태 추가/변경/삭제 유연성 확보
 - `position`: 드래그앤드롭 순서 (동일 status 내)
 
 ---
