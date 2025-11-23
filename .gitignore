@@ -33,6 +33,7 @@ gtd-todo
 
 # env file
 .env
+.env.test
 
 # Editor/IDE
 # .idea/
