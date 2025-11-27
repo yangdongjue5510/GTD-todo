@@ -6,7 +6,6 @@ import (
 	"os"
 	"testing"
 	"time"
-	"yangdongju/gtd_todo/internal/config"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -44,13 +43,12 @@ func TestMain(m *testing.M) {
 }
 
 func startPostgresContainer(ctx context.Context) *postgres.PostgresContainer {
-	cfg := config.Load()
 	pgContainer, err := postgres.Run(
 		ctx,
 		"postgres:15",
-		postgres.WithDatabase(cfg.DBName),
-		postgres.WithUsername(cfg.DBUser),
-		postgres.WithPassword(cfg.DBPassword),
+		postgres.WithDatabase("gtd_todo"),
+		postgres.WithUsername("gtd_test_user"),
+		postgres.WithPassword("gtd_test_password"),
 		testcontainers.WithWaitStrategy(
 			wait.ForLog("database system is ready to accept connections").
 				WithOccurrence(2).
