@@ -12,14 +12,14 @@ import (
 func TestFindUserByEmail(t *testing.T) {
 	testDB := testhelper.GetTestDB()
 	testhelper.CleanUp()
-	
+
 	email := "hello@example.com"
 	password := "password1234_hash"
 	testDB.Exec("INSERT INTO users (email, password_hash) VALUES ($1, $2)", email, password)
 
-	userRepository := NewUserRepository(testDB)
+	userRepository := newUserRepository(testDB)
 
-	foundUser, err := userRepository.FindUserByEmail(email)
+	foundUser, err := userRepository.findUserByEmail(email)
 
 	assert.Nil(t, err)
 	assert.Equal(t, foundUser.ID, 1)
@@ -30,9 +30,9 @@ func TestFindUserByEmail_NotFound(t *testing.T) {
 	testDB := testhelper.GetTestDB()
 	testhelper.CleanUp()
 	email := "hello@example.com"
-	userRepository := NewUserRepository(testDB)
+	userRepository := newUserRepository(testDB)
 
-	foundUser, err := userRepository.FindUserByEmail(email)
+	foundUser, err := userRepository.findUserByEmail(email)
 
 	assert.Nil(t, err)
 	assert.Nil(t, foundUser)
@@ -41,15 +41,15 @@ func TestFindUserByEmail_NotFound(t *testing.T) {
 func TestSave(t *testing.T) {
 	testDB := testhelper.GetTestDB()
 	testhelper.CleanUp()
-	userRepository := NewUserRepository(testDB)
+	userRepository := newUserRepository(testDB)
 
-	createdUser:= User{
-		Email: "hello@example.com",
+	createdUser := User{
+		Email:        "hello@example.com",
 		PasswordHash: "password_hash",
-		CreatedAt: time.Now(),
+		CreatedAt:    time.Now(),
 	}
-	
-	savedUser, _ := userRepository.Save(&createdUser)
+
+	savedUser, _ := userRepository.save(&createdUser)
 
 	assert.Equal(t, 1, savedUser.ID)
 	assert.Equal(t, savedUser.Email, createdUser.Email)

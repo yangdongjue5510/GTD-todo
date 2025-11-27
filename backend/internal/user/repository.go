@@ -7,12 +7,12 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type UserRepository interface {
-	FindUserByEmail(email string) (*User, error)
-	Save(user *User) (*User, error)
+type userRepository interface {
+	findUserByEmail(email string) (*User, error)
+	save(user *User) (*User, error)
 }
 
-type UserRepositoryImpl struct {
+type userRepositoryImpl struct {
 	db *sqlx.DB
 }
 
@@ -24,11 +24,11 @@ type User struct {
 	UpdatedAt    time.Time `db:"updated_at"`
 }
 
-func NewUserRepository(db *sqlx.DB) *UserRepositoryImpl {
-	return &UserRepositoryImpl{db: db}
+func newUserRepository(db *sqlx.DB) *userRepositoryImpl {
+	return &userRepositoryImpl{db: db}
 }
 
-func (r *UserRepositoryImpl) FindUserByEmail(email string) (*User, error) {
+func (r *userRepositoryImpl) findUserByEmail(email string) (*User, error) {
 	var user User
 
 	err := r.db.Get(&user, "SELECT * FROM users WHERE email = $1", email)
@@ -43,13 +43,16 @@ func (r *UserRepositoryImpl) FindUserByEmail(email string) (*User, error) {
 	return &user, nil
 }
 
-func (r *UserRepositoryImpl) Save(user *User) (*User, error) {
+func (r *userRepositoryImpl) save(user *User) (*User, error) {
 	var id int
 	err := r.db.QueryRow(`
 		INSERT INTO users (email, password_hash, created_at)
 		VALUES ($1, $2, $3)
 		RETURNING id`,
 		user.Email, user.PasswordHash, user.CreatedAt).Scan(&id)
+	if err != nil {
+		return nil, err
+	}
 	user.ID = id
-	return user, err 
+	return user, nil
 }
