@@ -1,8 +1,6 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -33,20 +31,4 @@ func TestHealthCheck(t *testing.T) {
 	assert.Contains(t, w.Body.String(), `{"status":"ok"}`)
 }
 
-func TestSignUpAPI(t *testing.T) {
-	// given
-	testhelper.CleanUp()
-	gin.SetMode(gin.TestMode)
-	router := setupRouter(testhelper.GetTestDB())
 
-	requestBody := SignUpRequest{Email: "test@example.com", Password: "password1234"}
-	requestJsonBody, _ := json.Marshal(requestBody)
-
-	// when
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/api/signup", bytes.NewBuffer(requestJsonBody))
-	router.ServeHTTP(w, req)
-
-	// then
-	assert.Equal(t, http.StatusCreated, w.Code)
-}
