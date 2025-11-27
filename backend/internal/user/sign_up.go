@@ -40,10 +40,13 @@ func (s *userService) signUp(req SignUpRequest) (*SignUpResponse, error) {
 	}
 
 	savedUser, err := s.userRepository.save(&newUser)
+	if err != nil {
+		return nil, err
+	}
 	return &SignUpResponse{
 		ID:    savedUser.ID,
 		Email: savedUser.Email,
-	}, err
+	}, nil
 }
 
 func hashPassword(password string) (string, error) {
