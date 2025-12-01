@@ -20,6 +20,17 @@ func (m *mockSignUpUsecase) signUp(request SignUpRequest) (*SignUpResponse, erro
 	return nil, errors.New("signUpFuncStub not implemented")
 }
 
+type mockLoginUsecase struct {
+	loginFuncStub func(request loginRequest) (*loginResponse, error)
+}
+
+func (m *mockLoginUsecase) login(request loginRequest) (*loginResponse, error) {
+	if m.loginFuncStub != nil {
+		return m.loginFuncStub(request)
+	}
+	return nil, errors.New("loginStub not implemented")
+}
+
 // ============ Test Cases ============
 
 func TestHandleSignUp_Success(t *testing.T) {
@@ -33,7 +44,7 @@ func TestHandleSignUp_Success(t *testing.T) {
 		},
 	}
 
-	handler := newUserHandler(mockUsecase)
+	handler := &UserHandler{signUpUsecase: mockUsecase} 
 	request := SignUpRequest{
 		Email:    "test@example.com",
 		Password: "password1234",
@@ -59,7 +70,7 @@ func TestHandleSignUp_UserAlreadyExists(t *testing.T) {
 		},
 	}
 
-	handler := newUserHandler(mockUsecase)
+	handler := &UserHandler{signUpUsecase: mockUsecase} 
 	request := SignUpRequest{
 		Email:    "existing@example.com",
 		Password: "password1234",
@@ -84,7 +95,7 @@ func TestHandleSignUp_InternalServerError(t *testing.T) {
 		},
 	}
 
-	handler := newUserHandler(mockUsecase)
+	handler := &UserHandler{signUpUsecase: mockUsecase}
 	request := SignUpRequest{
 		Email:    "test@example.com",
 		Password: "password1234",
@@ -92,6 +103,79 @@ func TestHandleSignUp_InternalServerError(t *testing.T) {
 
 	// when
 	code, res := handler.HandleSignUp(request)
+	errRes, ok := res.(ErrorResponse)
+
+	// then
+	assert.Equal(t, http.StatusInternalServerError, code)
+	assert.True(t, ok, "Expected ErrorResponse type")
+	assert.Contains(t, errRes.Error, "database connection failed")
+}
+
+func TestHandleLogIn_Success(t *testing.T) {
+	// given
+	mockLoginUsecase := mockLoginUsecase{
+		loginFuncStub: func(request loginRequest) (*loginResponse, error) {
+			return &loginResponse{"example_token"}, nil
+		},
+	}
+
+	handler := &UserHandler{loginUsecase: &mockLoginUsecase}
+	request := loginRequest{
+		email:    "test@example.com",
+		password: "testpassword",
+	}
+
+	// when
+	code, res := handler.HandleLogin(request)
+	logInResponse, ok := res.(*loginResponse)
+
+	// then
+	assert.Equal(t, http.StatusOK, code)
+	assert.True(t, ok, "Expected type")
+	assert.NotNil(t, logInResponse)
+	assert.Equal(t, "example_token", logInResponse.token)
+}
+
+func TestHandleLogIn_InvalidCredentials(t *testing.T) {
+	// given
+	mockLoginUsecase := &mockLoginUsecase{
+		loginFuncStub: func(request loginRequest) (*loginResponse, error) {
+			return nil, newInvalidCredentialsError()
+		},
+	}
+
+	handler := &UserHandler{loginUsecase: mockLoginUsecase}
+	request := loginRequest{
+		email:    "test@example.com",
+		password: "wrongpassword",
+	}
+
+	// when
+	code, res := handler.HandleLogin(request)
+	errRes, ok := res.(ErrorResponse)
+
+	// then
+	assert.Equal(t, http.StatusUnauthorized, code)
+	assert.True(t, ok, "Expected ErrorResponse type")
+	assert.Equal(t, "Invalid email or password", errRes.Error)
+}
+
+func TestHandleLogIn_InternalServerError(t *testing.T) {
+	// given
+	mockLoginUsecase := &mockLoginUsecase{
+		loginFuncStub: func(request loginRequest) (*loginResponse, error) {
+			return nil, errors.New("database connection failed")
+		},
+	}
+
+	handler := &UserHandler{loginUsecase: mockLoginUsecase}
+	request := loginRequest{
+		email:    "test@example.com",
+		password: "testpassword",
+	}
+
+	// when
+	code, res := handler.HandleLogin(request)
 	errRes, ok := res.(ErrorResponse)
 
 	// then
