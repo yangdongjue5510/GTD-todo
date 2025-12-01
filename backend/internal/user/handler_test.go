@@ -121,8 +121,8 @@ func TestHandleLogIn_Success(t *testing.T) {
 
 	handler := &UserHandler{loginUsecase: &mockLoginUsecase}
 	request := loginRequest{
-		email:    "test@example.com",
-		password: "testpassword",
+		Email:    "test@example.com",
+		Password: "testpassword",
 	}
 
 	// when
@@ -133,7 +133,7 @@ func TestHandleLogIn_Success(t *testing.T) {
 	assert.Equal(t, http.StatusOK, code)
 	assert.True(t, ok, "Expected type")
 	assert.NotNil(t, logInResponse)
-	assert.Equal(t, "example_token", logInResponse.token)
+	assert.Equal(t, "example_token", logInResponse.Token)
 }
 
 func TestHandleLogIn_InvalidCredentials(t *testing.T) {
@@ -146,8 +146,8 @@ func TestHandleLogIn_InvalidCredentials(t *testing.T) {
 
 	handler := &UserHandler{loginUsecase: mockLoginUsecase}
 	request := loginRequest{
-		email:    "test@example.com",
-		password: "wrongpassword",
+		Email:    "test@example.com",
+		Password: "wrongpassword",
 	}
 
 	// when
@@ -170,8 +170,8 @@ func TestHandleLogIn_InternalServerError(t *testing.T) {
 
 	handler := &UserHandler{loginUsecase: mockLoginUsecase}
 	request := loginRequest{
-		email:    "test@example.com",
-		password: "testpassword",
+		Email:    "test@example.com",
+		Password: "testpassword",
 	}
 
 	// when

@@ -9,10 +9,10 @@ type loginUsecase interface {
 }
 
 type loginRequest struct {
-	email    string `json:email`
-	password string `json:password`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 type loginResponse struct {
-	token string `json:token`
+	Token string `json:"token"`
 }
