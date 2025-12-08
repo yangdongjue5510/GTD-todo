@@ -17,10 +17,6 @@ coverage.*
 *.coverprofile
 profile.cov
 
-# Mock file
-mock_*.go
-*_mock.go
-
 # Dependency directories (remove the comment below to include it)
 # vendor/
 

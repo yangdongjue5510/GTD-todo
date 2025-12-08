@@ -1,9 +1,10 @@
-package user
+package user_test
 
 import (
 	"testing"
 	"time"
 
+	"yangdongju/gtd_todo/internal/user"
 	"yangdongju/gtd_todo/testhelper"
 
 	"github.com/stretchr/testify/assert"
@@ -17,9 +18,9 @@ func TestFindUserByEmail(t *testing.T) {
 	password := "password1234_hash"
 	testDB.Exec("INSERT INTO users (email, password_hash) VALUES ($1, $2)", email, password)
 
-	userRepository := newUserRepository(testDB)
+	userRepository := user.NewUserRepository(testDB)
 
-	foundUser, err := userRepository.findUserByEmail(email)
+	foundUser, err := userRepository.FindUserByEmail(email)
 
 	assert.Nil(t, err)
 	assert.Equal(t, foundUser.ID, 1)
@@ -30,9 +31,9 @@ func TestFindUserByEmail_NotFound(t *testing.T) {
 	testDB := testhelper.GetTestDB()
 	testhelper.CleanUp()
 	email := "hello@example.com"
-	userRepository := newUserRepository(testDB)
+	userRepository := user.NewUserRepository(testDB)
 
-	foundUser, err := userRepository.findUserByEmail(email)
+	foundUser, err := userRepository.FindUserByEmail(email)
 
 	assert.Nil(t, err)
 	assert.Nil(t, foundUser)
@@ -41,15 +42,15 @@ func TestFindUserByEmail_NotFound(t *testing.T) {
 func TestSave(t *testing.T) {
 	testDB := testhelper.GetTestDB()
 	testhelper.CleanUp()
-	userRepository := newUserRepository(testDB)
+	userRepository := user.NewUserRepository(testDB)
 
-	createdUser := User{
+	createdUser := user.User{
 		Email:        "hello@example.com",
 		PasswordHash: "password_hash",
 		CreatedAt:    time.Now(),
 	}
 
-	savedUser, _ := userRepository.save(&createdUser)
+	savedUser, _ := userRepository.Save(&createdUser)
 
 	assert.Equal(t, 1, savedUser.ID)
 	assert.Equal(t, savedUser.Email, createdUser.Email)

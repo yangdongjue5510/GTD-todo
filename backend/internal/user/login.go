@@ -1,18 +1,49 @@
 package user
 
-func (s *userService) login(request loginRequest) (*loginResponse, error) {
-	return nil, nil
+import (
+	"time"
+
+	"golang.org/x/crypto/bcrypt"
+)
+
+func (s *userService) Login(request LoginRequest) (*LoginResponse, error) {
+	user, err := s.userRepository.FindUserByEmail(request.Email)
+	if err != nil {
+		return nil, err
+	}
+
+	if user == nil {
+		return nil, newInvalidCredentialsError()
+	}
+
+	err = bcrypt.CompareHashAndPassword(
+		[]byte(user.PasswordHash),
+		[]byte(request.Password),
+	)
+	if err != nil {
+		return nil, newInvalidCredentialsError()
+	}
+
+	// 3. JWT 토큰 생성
+	token, err := s.tokenIssuer.Issue(user.ID, user.Email, 24 * time.Hour)
+	if err != nil {
+		return nil, err
+	}
+
+	return &LoginResponse{
+		Token: token,
+	}, nil
 }
 
-type loginUsecase interface {
-	login(request loginRequest) (*loginResponse, error)
+type LoginUsecase interface {
+	Login(request LoginRequest) (*LoginResponse, error)
 }
 
-type loginRequest struct {
+type LoginRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
-type loginResponse struct {
+type LoginResponse struct {
 	Token string `json:"token"`
 }

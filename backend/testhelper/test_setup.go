@@ -36,6 +36,7 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Failed to init DB.\n%v", err)
 	}
 
+	os.Setenv("JWT_SECRET_KEY", "TEST_JWT_SECRET_KEY_EXAMPLE")
 	code := m.Run()
 
 	pgContainer.Terminate(ctx)

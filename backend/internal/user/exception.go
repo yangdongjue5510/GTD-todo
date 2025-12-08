@@ -23,18 +23,18 @@ func newUserAlreadyExistsError(id int, email string) *userAlreadyExistsError {
 	}
 }
 
-type invalidCredentialsError struct {
+type InvalidCredentialsError struct {
 	Code      int
 	Message   string
 	NestedErr error
 }
 
-func (e invalidCredentialsError) Error() string {
+func (e InvalidCredentialsError) Error() string {
 	return e.Message
 }
 
-func newInvalidCredentialsError() *invalidCredentialsError {
-	return &invalidCredentialsError{
+func newInvalidCredentialsError() *InvalidCredentialsError {
+	return &InvalidCredentialsError{
 		Code:      http.StatusUnauthorized,
 		Message:   "Invalid email or password",
 		NestedErr: nil,

@@ -6,20 +6,12 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type signUpUsecase interface {
+type SignUpUsecase interface {
 	signUp(request SignUpRequest) (*SignUpResponse, error)
 }
 
-type userService struct {
-	userRepository userRepository
-}
-
-func newUserService(repository userRepository) *userService {
-	return &userService{userRepository: repository}
-}
-
 func (s *userService) signUp(req SignUpRequest) (*SignUpResponse, error) {
-	foundUser, err := s.userRepository.findUserByEmail(req.Email)
+	foundUser, err := s.userRepository.FindUserByEmail(req.Email)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +31,7 @@ func (s *userService) signUp(req SignUpRequest) (*SignUpResponse, error) {
 		CreatedAt:    time.Now(),
 	}
 
-	savedUser, err := s.userRepository.save(&newUser)
+	savedUser, err := s.userRepository.Save(&newUser)
 	if err != nil {
 		return nil, err
 	}

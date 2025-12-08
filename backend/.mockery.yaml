@@ -1,0 +1,11 @@
+with-expecter: true
+dir: mocks/{{ replaceAll .InterfaceDirRelative "internal" "internalpkg" }}
+mockname: "{{.InterfaceName}}"
+outpkg: "{{.PackageName}}mocks"
+filename: "{{.InterfaceName | snakecase}}.go"
+resolve-type-alias: False
+issue-845-fix: true
+packages:
+  yangdongju/gtd_todo/internal/user:
+    config:
+      all: true

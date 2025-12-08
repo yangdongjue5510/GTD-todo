@@ -14,14 +14,14 @@ type mockUserRepository struct {
 	saveStub            func(user *User) (*User, error)
 }
 
-func (m *mockUserRepository) findUserByEmail(email string) (*User, error) {
+func (m *mockUserRepository) FindUserByEmail(email string) (*User, error) {
 	if m.findUserByEmailStub != nil {
 		return m.findUserByEmailStub(email)
 	}
 	return nil, errors.New("findUserByEmailStub not implemented")
 }
 
-func (m *mockUserRepository) save(user *User) (*User, error) {
+func (m *mockUserRepository) Save(user *User) (*User, error) {
 	if m.saveStub != nil {
 		return m.saveStub(user)
 	}
@@ -44,7 +44,7 @@ func TestSignUp_Success(t *testing.T) {
 		},
 	}
 
-	service := newUserService(mockRepo)
+	service := &userService{userRepository: mockRepo}
 	request := SignUpRequest{
 		Email:    "newuser@example.com",
 		Password: "password1234",
@@ -80,7 +80,7 @@ func TestSignUp_UserAlreadyExists(t *testing.T) {
 		},
 	}
 
-	service := newUserService(mockRepo)
+	service := &userService{userRepository: mockRepo}
 	request := SignUpRequest{
 		Email:    "existing@example.com",
 		Password: "password1234",
@@ -107,7 +107,7 @@ func TestSignUp_FindUserByEmail_RepositoryError(t *testing.T) {
 		},
 	}
 
-	service := newUserService(mockRepo)
+	service := &userService{userRepository: mockRepo}
 	request := SignUpRequest{
 		Email:    "test@example.com",
 		Password: "password1234",
@@ -133,7 +133,7 @@ func TestSignUp_Save_RepositoryError(t *testing.T) {
 		},
 	}
 
-	service := newUserService(mockRepo)
+	service := &userService{userRepository: mockRepo}
 	request := SignUpRequest{
 		Email:    "test@example.com",
 		Password: "password1234",

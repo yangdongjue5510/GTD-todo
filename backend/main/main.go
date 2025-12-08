@@ -17,10 +17,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("Database connection failed.\n%v", err)
 	}
-	setupRouter(pool)
+	SetupRouter(pool)
 }
 
-func setupRouter(pool *sqlx.DB) *gin.Engine {
+func SetupRouter(pool *sqlx.DB) *gin.Engine {
 	router := gin.Default()
 	ginAdapter := ginAdapter{
 		userHandler: user.IntializeHandler(pool),

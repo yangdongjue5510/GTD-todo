@@ -6,8 +6,8 @@ import (
 )
 
 type UserHandler struct {
-	signUpUsecase signUpUsecase
-	loginUsecase  loginUsecase
+	signUpUsecase SignUpUsecase
+	loginUsecase  LoginUsecase
 }
 
 func (h *UserHandler) HandleSignUp(req SignUpRequest) (int, any) {
@@ -18,8 +18,8 @@ func (h *UserHandler) HandleSignUp(req SignUpRequest) (int, any) {
 	return http.StatusCreated, res
 }
 
-func (h *UserHandler) HandleLogin(req loginRequest) (int, any) {
-	res, err := h.loginUsecase.login(req)
+func (h *UserHandler) HandleLogin(req LoginRequest) (int, any) {
+	res, err := h.loginUsecase.Login(req)
 	if err != nil {
 		return handleError(err)
 	}
@@ -36,7 +36,7 @@ func handleError(err error) (int, ErrorResponse) {
 	}
 
 	var userAlreadyExistsError *userAlreadyExistsError
-	var invalidCredentialsError *invalidCredentialsError
+	var invalidCredentialsError *InvalidCredentialsError
 
 	switch {
 	case errors.As(err, &userAlreadyExistsError):
