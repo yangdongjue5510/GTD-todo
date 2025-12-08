@@ -29,11 +29,11 @@ type tokenService struct {
 
 func NewTokenService(secretKey string, now func() time.Time) (*tokenService, error) {
 	if secretKey == "" {
-		return nil, errors.New("secret key should not be empty.")
+		return nil, errors.New("secret key should not be empty")
 	}
 
 	if now == nil {
-		return nil, errors.New("now function shoud not be nil.")
+		return nil, errors.New("now function shoud not be nil")
 	}
 	return &tokenService{
 		secretKey: []byte(secretKey),

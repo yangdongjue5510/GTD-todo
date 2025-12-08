@@ -7,17 +7,17 @@ import (
 )
 
 type SignUpUsecase interface {
-	signUp(request SignUpRequest) (*SignUpResponse, error)
+	SignUp(request SignUpRequest) (*SignUpResponse, error)
 }
 
-func (s *userService) signUp(req SignUpRequest) (*SignUpResponse, error) {
+func (s *userService) SignUp(req SignUpRequest) (*SignUpResponse, error) {
 	foundUser, err := s.userRepository.FindUserByEmail(req.Email)
 	if err != nil {
 		return nil, err
 	}
 
 	if foundUser != nil {
-		return nil, newUserAlreadyExistsError(foundUser.ID, foundUser.Email)
+		return nil, NewUserAlreadyExistsError(foundUser.ID, foundUser.Email)
 	}
 
 	passwordHash, err := hashPassword(req.Password)

@@ -10,8 +10,15 @@ type UserHandler struct {
 	loginUsecase  LoginUsecase
 }
 
+func NewUserHandler(loginUsecase LoginUsecase, signUpUsecase SignUpUsecase) *UserHandler {
+	return &UserHandler{
+		loginUsecase:  loginUsecase,
+		signUpUsecase: signUpUsecase,
+	}
+}
+
 func (h *UserHandler) HandleSignUp(req SignUpRequest) (int, any) {
-	res, err := h.signUpUsecase.signUp(req)
+	res, err := h.signUpUsecase.SignUp(req)
 	if err != nil {
 		return handleError(err)
 	}
@@ -35,7 +42,7 @@ func handleError(err error) (int, ErrorResponse) {
 		return 0, ErrorResponse{}
 	}
 
-	var userAlreadyExistsError *userAlreadyExistsError
+	var userAlreadyExistsError *UserAlreadyExistsError
 	var invalidCredentialsError *InvalidCredentialsError
 
 	switch {

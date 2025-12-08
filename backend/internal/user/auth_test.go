@@ -1,13 +1,14 @@
-package user
+package user_test
 
 import (
 	"testing"
 	"time"
+	"yangdongju/gtd_todo/internal/user"
 
 	"github.com/stretchr/testify/assert"
 )
 
-// ============ NewTokenService Tests ============
+// ============user.NewTokenService Tests ============
 
 func TestNewTokenService_Success(t *testing.T) {
 	// given
@@ -15,13 +16,11 @@ func TestNewTokenService_Success(t *testing.T) {
 	nowFunc := time.Now
 
 	// when
-	service, err := NewTokenService(secretKey, nowFunc)
+	service, err := user.NewTokenService(secretKey, nowFunc)
 
 	// then
 	assert.NoError(t, err)
 	assert.NotNil(t, service)
-	assert.Equal(t, []byte(secretKey), service.secretKey)
-	assert.NotNil(t, service.now)
 }
 
 func TestNewTokenService_EmptySecretKey(t *testing.T) {
@@ -30,7 +29,7 @@ func TestNewTokenService_EmptySecretKey(t *testing.T) {
 	nowFunc := time.Now
 
 	// when
-	service, err := NewTokenService(secretKey, nowFunc)
+	service, err := user.NewTokenService(secretKey, nowFunc)
 
 	// then
 	assert.Error(t, err)
@@ -43,7 +42,7 @@ func TestNewTokenService_NilNowFunction(t *testing.T) {
 	secretKey := "test-secret-key-32-bytes-long!!"
 
 	// when
-	service, err := NewTokenService(secretKey, nil)
+	service, err := user.NewTokenService(secretKey, nil)
 
 	// then
 	assert.Error(t, err)
@@ -58,7 +57,7 @@ func TestIssue_Success(t *testing.T) {
 	fixedTime := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 	nowFunc := func() time.Time { return fixedTime }
 
-	service, _ := NewTokenService("test-secret-key", nowFunc)
+	service, _ := user.NewTokenService("test-secret-key", nowFunc)
 	userID := 123
 	email := "test@example.com"
 	duration := 1 * time.Hour
@@ -76,7 +75,7 @@ func TestIssue_VerifyTokenStructure(t *testing.T) {
 	fixedTime := time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC)
 	nowFunc := func() time.Time { return fixedTime }
 
-	service, _ := NewTokenService("test-secret-key", nowFunc)
+	service, _ := user.NewTokenService("test-secret-key", nowFunc)
 	userID := 456
 	email := "user@example.com"
 	duration := 2 * time.Hour
@@ -102,7 +101,7 @@ func TestIssue_WithMockedTime(t *testing.T) {
 	fixedTime := time.Date(2024, 6, 15, 10, 30, 0, 0, time.UTC)
 	nowFunc := func() time.Time { return fixedTime }
 
-	service, _ := NewTokenService("my-secret-key", nowFunc)
+	service, _ :=user.NewTokenService("my-secret-key", nowFunc)
 	duration := 30 * time.Minute
 
 	// when
@@ -124,7 +123,7 @@ func TestParse_ValidToken(t *testing.T) {
 	fixedTime := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 	nowFunc := func() time.Time { return fixedTime }
 
-	service, _ := NewTokenService("test-secret-key", nowFunc)
+	service, _ :=user.NewTokenService("test-secret-key", nowFunc)
 	userID := 100
 	email := "valid@example.com"
 	duration := 1 * time.Hour
@@ -144,7 +143,7 @@ func TestParse_ValidToken(t *testing.T) {
 func TestParse_VerifyClaimsContent(t *testing.T) {
 	// given
 	nowFunc := time.Now
-	service, _ := NewTokenService("test-secret-key", nowFunc)
+	service, _ :=user.NewTokenService("test-secret-key", nowFunc)
 
 	expectedUserID := 789
 	expectedEmail := "verify@example.com"
@@ -163,8 +162,8 @@ func TestParse_VerifyClaimsContent(t *testing.T) {
 func TestParse_InvalidSignature(t *testing.T) {
 	// given
 	nowFunc := time.Now
-	service1, _ := NewTokenService("secret-key-1", nowFunc)
-	service2, _ := NewTokenService("secret-key-2", nowFunc)
+	service1, _ :=user.NewTokenService("secret-key-1", nowFunc)
+	service2, _ :=user.NewTokenService("secret-key-2", nowFunc)
 
 	// service1으로 토큰 생성
 	token, _ := service1.Issue(1, "test@example.com", 1*time.Hour)
@@ -184,7 +183,7 @@ func TestParse_ExpiredToken(t *testing.T) {
 	currentTime := fixedTime
 	nowFunc := func() time.Time { return currentTime }
 
-	service, _ := NewTokenService("test-secret-key", nowFunc)
+	service, _ :=user.NewTokenService("test-secret-key", nowFunc)
 
 	// 1시간 duration으로 토큰 생성
 	token, _ := service.Issue(1, "test@example.com", 1*time.Hour)
@@ -204,7 +203,7 @@ func TestParse_ExpiredToken(t *testing.T) {
 func TestParse_MalformedToken(t *testing.T) {
 	// given
 	nowFunc := time.Now
-	service, _ := NewTokenService("test-secret-key", nowFunc)
+	service, _ :=user.NewTokenService("test-secret-key", nowFunc)
 
 	malformedToken := "invalid.token.string"
 
@@ -220,7 +219,7 @@ func TestParse_MalformedToken(t *testing.T) {
 func TestParse_EmptyToken(t *testing.T) {
 	// given
 	nowFunc := time.Now
-	service, _ := NewTokenService("test-secret-key", nowFunc)
+	service, _ :=user.NewTokenService("test-secret-key", nowFunc)
 
 	// when
 	claims, err := service.Parse("")
@@ -237,7 +236,7 @@ func TestParse_TokenWithinValidTimeRange(t *testing.T) {
 	currentTime := fixedTime
 	nowFunc := func() time.Time { return currentTime }
 
-	service, _ := NewTokenService("test-secret-key", nowFunc)
+	service, _ :=user.NewTokenService("test-secret-key", nowFunc)
 
 	// 1시간 duration으로 토큰 생성
 	token, _ := service.Issue(1, "test@example.com", 1*time.Hour)
@@ -261,7 +260,7 @@ func TestParse_TokenExactlyAtExpiration(t *testing.T) {
 	currentTime := fixedTime
 	nowFunc := func() time.Time { return currentTime }
 
-	service, _ := NewTokenService("test-secret-key", nowFunc)
+	service, _ :=user.NewTokenService("test-secret-key", nowFunc)
 
 	duration := 1 * time.Hour
 	token, _ := service.Issue(1, "test@example.com", duration)

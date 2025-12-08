@@ -1,57 +1,51 @@
-package user
+package user_test
 
 import (
 	"errors"
 	"testing"
 
+	"yangdongju/gtd_todo/internal/user"
+	usermocks "yangdongju/gtd_todo/internal/user/mocks"
+
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"golang.org/x/crypto/bcrypt"
 )
-
-// ============ Mock UserRepository ============
-type mockUserRepository struct {
-	findUserByEmailStub func(email string) (*User, error)
-	saveStub            func(user *User) (*User, error)
-}
-
-func (m *mockUserRepository) FindUserByEmail(email string) (*User, error) {
-	if m.findUserByEmailStub != nil {
-		return m.findUserByEmailStub(email)
-	}
-	return nil, errors.New("findUserByEmailStub not implemented")
-}
-
-func (m *mockUserRepository) Save(user *User) (*User, error) {
-	if m.saveStub != nil {
-		return m.saveStub(user)
-	}
-	return nil, errors.New("saveStub not implemented")
-}
 
 // ============ Test Cases ============
 
 func TestSignUp_Success(t *testing.T) {
 	// given
-	var capturedUser *User
-	mockRepo := &mockUserRepository{
-		findUserByEmailStub: func(email string) (*User, error) {
-			return nil, nil
-		},
-		saveStub: func(user *User) (*User, error) {
-			capturedUser = user
-			user.ID = 1
-			return user, nil
-		},
-	}
+	var capturedUser *user.User
+	mockRepo := usermocks.NewUserRepository(t)
+	mockIssuer := usermocks.NewIssuer(t)
+	mockParser := usermocks.NewParser(t)
 
-	service := &userService{userRepository: mockRepo}
-	request := SignUpRequest{
+	request := user.SignUpRequest{
 		Email:    "newuser@example.com",
 		Password: "password1234",
 	}
 
+	// Mock 설정
+	mockRepo.EXPECT().FindUserByEmail(request.Email).Return(nil, nil)
+	mockRepo.EXPECT().Save(mock.MatchedBy(func(u *user.User) bool {
+		capturedUser = u
+		return u.Email == request.Email &&
+			bcrypt.CompareHashAndPassword([]byte(u.PasswordHash),
+				[]byte(request.Password)) == nil
+	})).RunAndReturn(func(u *user.User) (*user.User, error) {
+		return &user.User{
+			ID:           1,
+			Email:        u.Email,
+			PasswordHash: u.PasswordHash,
+			CreatedAt:    u.CreatedAt,
+		}, nil
+	})
+
+	service := user.NewUserService(mockRepo, mockIssuer, mockParser)
+
 	// when
-	response, err := service.signUp(request)
+	response, err := service.SignUp(request)
 
 	// then
 	assert.Nil(t, err)
@@ -71,29 +65,33 @@ func TestSignUp_Success(t *testing.T) {
 
 func TestSignUp_UserAlreadyExists(t *testing.T) {
 	// given
-	mockRepo := &mockUserRepository{
-		findUserByEmailStub: func(email string) (*User, error) {
-			return &User{
-				ID:    10,
-				Email: email,
-			}, nil
-		},
+	mockRepo := usermocks.NewUserRepository(t)
+	mockIssuer := usermocks.NewIssuer(t)
+	mockParser := usermocks.NewParser(t)
+
+	existingUser := &user.User{
+		ID:    10,
+		Email: "existing@example.com",
 	}
 
-	service := &userService{userRepository: mockRepo}
-	request := SignUpRequest{
+	request := user.SignUpRequest{
 		Email:    "existing@example.com",
 		Password: "password1234",
 	}
 
+	// Mock 설정
+	mockRepo.EXPECT().FindUserByEmail(request.Email).Return(existingUser, nil)
+
+	service := user.NewUserService(mockRepo, mockIssuer, mockParser)
+
 	// when
-	response, err := service.signUp(request)
+	response, err := service.SignUp(request)
 
 	// then
 	assert.Nil(t, response)
 	assert.NotNil(t, err)
 
-	var userAlreadyExistsErr *userAlreadyExistsError
+	var userAlreadyExistsErr *user.UserAlreadyExistsError
 	assert.True(t, errors.As(err, &userAlreadyExistsErr), "Error should be userAlreadyExistsError type")
 	assert.Contains(t, err.Error(), "existing@example.com")
 	assert.Contains(t, err.Error(), "10")
@@ -101,20 +99,24 @@ func TestSignUp_UserAlreadyExists(t *testing.T) {
 
 func TestSignUp_FindUserByEmail_RepositoryError(t *testing.T) {
 	// given
-	mockRepo := &mockUserRepository{
-		findUserByEmailStub: func(email string) (*User, error) {
-			return nil, errors.New("database connection failed")
-		},
-	}
+	mockRepo := usermocks.NewUserRepository(t)
+	mockIssuer := usermocks.NewIssuer(t)
+	mockParser := usermocks.NewParser(t)
 
-	service := &userService{userRepository: mockRepo}
-	request := SignUpRequest{
+	repositoryError := errors.New("database connection failed")
+
+	request := user.SignUpRequest{
 		Email:    "test@example.com",
 		Password: "password1234",
 	}
 
+	// Mock 설정
+	mockRepo.EXPECT().FindUserByEmail(request.Email).Return(nil, repositoryError)
+
+	service := user.NewUserService(mockRepo, mockIssuer, mockParser)
+
 	// when
-	response, err := service.signUp(request)
+	response, err := service.SignUp(request)
 
 	// then
 	assert.Nil(t, response)
@@ -124,23 +126,25 @@ func TestSignUp_FindUserByEmail_RepositoryError(t *testing.T) {
 
 func TestSignUp_Save_RepositoryError(t *testing.T) {
 	// given
-	mockRepo := &mockUserRepository{
-		findUserByEmailStub: func(email string) (*User, error) {
-			return nil, nil
-		},
-		saveStub: func(user *User) (*User, error) {
-			return nil, errors.New("failed to insert user")
-		},
-	}
+	mockRepo := usermocks.NewUserRepository(t)
+	mockIssuer := usermocks.NewIssuer(t)
+	mockParser := usermocks.NewParser(t)
 
-	service := &userService{userRepository: mockRepo}
-	request := SignUpRequest{
+	saveError := errors.New("failed to insert user")
+
+	request := user.SignUpRequest{
 		Email:    "test@example.com",
 		Password: "password1234",
 	}
 
+	// Mock 설정
+	mockRepo.EXPECT().FindUserByEmail(request.Email).Return(nil, nil)
+	mockRepo.EXPECT().Save(mock.Anything).Return(nil, saveError)
+
+	service := user.NewUserService(mockRepo, mockIssuer, mockParser)
+
 	// when
-	response, err := service.signUp(request)
+	response, err := service.SignUp(request)
 
 	// then
 	assert.Nil(t, response)

@@ -5,18 +5,18 @@ import (
 	"net/http"
 )
 
-type userAlreadyExistsError struct {
+type UserAlreadyExistsError struct {
 	Code      int
 	Message   string
 	NestedErr error
 }
 
-func (e userAlreadyExistsError) Error() string {
+func (e UserAlreadyExistsError) Error() string {
 	return e.Message
 }
 
-func newUserAlreadyExistsError(id int, email string) *userAlreadyExistsError {
-	return &userAlreadyExistsError{
+func NewUserAlreadyExistsError(id int, email string) *UserAlreadyExistsError {
+	return &UserAlreadyExistsError{
 		Code:      http.StatusBadRequest,
 		Message:   fmt.Sprintf("User already exists. id=%v & email=%v", id, email),
 		NestedErr: nil,
@@ -33,7 +33,7 @@ func (e InvalidCredentialsError) Error() string {
 	return e.Message
 }
 
-func newInvalidCredentialsError() *InvalidCredentialsError {
+func NewInvalidCredentialsError() *InvalidCredentialsError {
 	return &InvalidCredentialsError{
 		Code:      http.StatusUnauthorized,
 		Message:   "Invalid email or password",

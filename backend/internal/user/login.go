@@ -13,7 +13,7 @@ func (s *userService) Login(request LoginRequest) (*LoginResponse, error) {
 	}
 
 	if user == nil {
-		return nil, newInvalidCredentialsError()
+		return nil, NewInvalidCredentialsError()
 	}
 
 	err = bcrypt.CompareHashAndPassword(
@@ -21,11 +21,11 @@ func (s *userService) Login(request LoginRequest) (*LoginResponse, error) {
 		[]byte(request.Password),
 	)
 	if err != nil {
-		return nil, newInvalidCredentialsError()
+		return nil, NewInvalidCredentialsError()
 	}
 
 	// 3. JWT 토큰 생성
-	token, err := s.tokenIssuer.Issue(user.ID, user.Email, 24 * time.Hour)
+	token, err := s.tokenIssuer.Issue(user.ID, user.Email, 24*time.Hour)
 	if err != nil {
 		return nil, err
 	}
