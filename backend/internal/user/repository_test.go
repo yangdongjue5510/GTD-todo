@@ -16,7 +16,7 @@ func TestFindUserByEmail(t *testing.T) {
 
 	email := "hello@example.com"
 	password := "password1234_hash"
-	testDB.Exec("INSERT INTO users (email, password_hash) VALUES ($1, $2)", email, password)
+	_, _ = testDB.Exec("INSERT INTO users (email, password_hash) VALUES ($1, $2)", email, password)
 
 	userRepository := user.NewUserRepository(testDB)
 
