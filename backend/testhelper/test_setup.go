@@ -21,26 +21,32 @@ func TestMain(m *testing.M) {
 
 	connStr, err := pgContainer.ConnectionString(ctx, "sslmode=disable")
 	if err != nil {
-		pgContainer.Terminate(ctx)
+		terminate(ctx, pgContainer)
 		log.Fatalf("Failed to get connection string.\n%v", err)
 	}
 
 	sqlxDB, err := sqlx.Open("postgres", connStr)
 	if err != nil {
-		pgContainer.Terminate(ctx)
+		terminate(ctx, pgContainer)
 		log.Fatalf("Failed to get connection.\n%v", err)
 	}
 
 	if err := initDB(sqlxDB); err != nil {
-		pgContainer.Terminate(ctx)
+		terminate(ctx, pgContainer)
 		log.Fatalf("Failed to init DB.\n%v", err)
 	}
 
 	os.Setenv("JWT_SECRET_KEY", "TEST_JWT_SECRET_KEY_EXAMPLE")
 	code := m.Run()
 
-	pgContainer.Terminate(ctx)
+	terminate(ctx, pgContainer)	
 	os.Exit(code)
+}
+
+func terminate(ctx context.Context, container testcontainers.Container) {
+	if err := container.Terminate(ctx); err != nil {
+		log.Printf("Failed to terminate container.\n%v", err)
+	}
 }
 
 func startPostgresContainer(ctx context.Context) *postgres.PostgresContainer {
