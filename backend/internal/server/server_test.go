@@ -1,10 +1,10 @@
-package main_test
+package server_test
 
 import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"yangdongju/gtd_todo/main"
+	"yangdongju/gtd_todo/internal/server"
 	"yangdongju/gtd_todo/testhelper"
 
 	"github.com/stretchr/testify/assert"
@@ -20,7 +20,7 @@ func TestHealthCheck(t *testing.T) {
 	// given
 	testhelper.CleanUp()
 	gin.SetMode(gin.TestMode)
-	router := main.SetupRouter(testhelper.GetTestDB())
+	router := server.SetupRouter(testhelper.GetTestDB())
 
 	// when
 	w := httptest.NewRecorder()

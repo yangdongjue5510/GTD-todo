@@ -1,8 +1,8 @@
-.PHONY: deps tidy mocks test coverage-html ci
+.PHONY: deps tidy lint test-tools test check-coverage ci
 GOBIN ?= $(HOME)/go/bin
 COVERAGE_FILE ?= coverage.out
 COVERAGE_TARGET_PACKAGE ?= $(shell go list ./... \
-| grep -Ev '/(testhelper|mocks|db|config|main)$$' \
+| grep -Ev '/(testhelper|mocks|db|config|main|acceptance)$$' \
 | paste -sd, -)
 COVERAGE_THRESHOLD ?= 80
 

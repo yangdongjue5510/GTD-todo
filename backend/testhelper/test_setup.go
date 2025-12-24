@@ -2,6 +2,7 @@ package testhelper
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"testing"
@@ -16,34 +17,59 @@ import (
 
 func TestMain(m *testing.M) {
 	ctx := context.Background()
+	db, dbContainer, err := prepareTestDatabase(ctx)
+	
+	if err != nil {
+		log.Fatalf("Failed to prepare test database.\n%v", err)
+	}
 
+	testDB = db
+	code := m.Run()
+	terminateDb(db)
+	terminateContainer(ctx, dbContainer)
+	os.Exit(code)
+}
+
+func prepareTestDatabase(ctx context.Context) (*sqlx.DB, testcontainers.Container, error) {
 	pgContainer := startPostgresContainer(ctx)
 
 	connStr, err := pgContainer.ConnectionString(ctx, "sslmode=disable")
 	if err != nil {
-		terminate(ctx, pgContainer)
-		log.Fatalf("Failed to get connection string.\n%v", err)
+		terminateContainer(ctx, pgContainer)
+		return nil, nil, fmt.Errorf("failed to get connection string: %w", err)
 	}
 
 	sqlxDB, err := sqlx.Open("postgres", connStr)
 	if err != nil {
-		terminate(ctx, pgContainer)
-		log.Fatalf("Failed to get connection.\n%v", err)
+		terminateDb(sqlxDB)
+		terminateContainer(ctx, pgContainer)
+		return nil, nil, fmt.Errorf("failed to open connection: %w", err)
 	}
 
 	if err := initDB(sqlxDB); err != nil {
-		terminate(ctx, pgContainer)
-		log.Fatalf("Failed to init DB.\n%v", err)
+		terminateDb(sqlxDB)
+		terminateContainer(ctx, pgContainer)
+		return nil, nil, fmt.Errorf("failed to initialize database: %w", err)
 	}
 
 	os.Setenv("JWT_SECRET_KEY", "TEST_JWT_SECRET_KEY_EXAMPLE")
-	code := m.Run()
 
-	terminate(ctx, pgContainer)	
-	os.Exit(code)
+	return sqlxDB, pgContainer, nil
 }
 
-func terminate(ctx context.Context, container testcontainers.Container) {
+func terminateDb(db *sqlx.DB) {
+	if db == nil {
+		return
+	}
+	if err := db.Close(); err != nil {
+		log.Printf("Failed to close test database connection.\n%v", err)
+	}
+}
+
+func terminateContainer(ctx context.Context, container testcontainers.Container) {
+	if container == nil {
+		return
+	}
 	if err := container.Terminate(ctx); err != nil {
 		log.Printf("Failed to terminate container.\n%v", err)
 	}
